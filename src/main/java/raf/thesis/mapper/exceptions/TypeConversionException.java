@@ -1,0 +1,7 @@
+package raf.thesis.mapper.exceptions;
+
+public class TypeConversionException extends RuntimeException {
+    public TypeConversionException(String message) {
+        super(message);
+    }
+}
