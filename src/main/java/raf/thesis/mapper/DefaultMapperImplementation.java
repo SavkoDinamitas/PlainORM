@@ -1,7 +1,8 @@
 package raf.thesis.mapper;
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import raf.thesis.mapper.exceptions.ClassInstantiationException;
 import raf.thesis.mapper.exceptions.ResultSetAccessException;
 import raf.thesis.mapper.exceptions.TypeConversionException;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DefaultMapperImplementation implements RowMapper {
+    private static final Logger log = LoggerFactory.getLogger(DefaultMapperImplementation.class);
     @Override
     public <T> T map(ResultSet rs, Class<T> clazz) {
         EntityMetadata entityMetadata = MetadataStorage.get(clazz);
@@ -34,12 +36,12 @@ public class DefaultMapperImplementation implements RowMapper {
             int columnCount = rsMeta.getColumnCount();
 
             for (int i = 1; i <= columnCount; i++) {
-                String columnName = rsMeta.getColumnName(i);
-                ColumnMetadata columnMetadata = entityMetadata.getColumns().get(columnName.toLowerCase());
+                String columnName = rsMeta.getColumnLabel(i).toLowerCase();
+                ColumnMetadata columnMetadata = entityMetadata.getColumns().get(columnName);
 
                 if (columnMetadata == null) {
-                    // Column doesn't belong to this entity -> skip
-                    //TODO: log some warning for skipping
+                    // Column doesn't belong to this entity -> skip for now
+                    log.warn("Column '{}' does not exist in entity '{}'; skipping.", columnName, clazz.getSimpleName());
                     continue;
                 }
 
