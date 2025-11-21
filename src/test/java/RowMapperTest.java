@@ -1,8 +1,11 @@
+import ch.qos.logback.classic.Logger;
 import domain.User;
+import logger.TestLogAppender;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import raf.thesis.mapper.DefaultMapperImplementation;
 import raf.thesis.mapper.RowMapper;
 import raf.thesis.metadata.ColumnMetadata;
@@ -21,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class RowMapperTest {
     private static Connection conn;
-    private MetadataStorage storage;
 
     @BeforeAll
     static void setupDatabase() throws SQLException {
@@ -59,7 +61,7 @@ public class RowMapperTest {
     }
 
     @Test
-    void testMapperMapsSingleRowCorrectly() throws SQLException, NoSuchFieldException {
+    void testMapperMapsSingleRowCorrectly() throws SQLException {
 
         RowMapper rowMapper = new DefaultMapperImplementation();
         String sql = "SELECT id, name, email, age FROM users WHERE id = 1";
@@ -81,6 +83,64 @@ public class RowMapperTest {
 
             // Ensure no more rows exist
             assertFalse(rs.next(), "ResultSet should only have one row.");
+        }
+    }
+
+    @Test
+    void testMapperHandlesPartialObjectMapping() throws SQLException {
+        RowMapper rowMapper = new DefaultMapperImplementation();
+        String sql = "SELECT id, name FROM users WHERE id = 2";
+
+        try (Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            // Check if a row was returned
+            assertTrue(rs.next(), "ResultSet should have a row.");
+
+            // Use your mapper to convert the ResultSet row to an object
+            User user = rowMapper.map(rs, User.class);
+
+            // Assert that the mapped object fields are correct
+            assertEquals(2, user.getId());
+            assertEquals("Bob", user.getName());
+            assertNull(user.getEmail());
+            assertEquals(0, user.getAge());
+            // Ensure no more rows exist
+            assertFalse(rs.next(), "ResultSet should only have one row.");
+        }
+    }
+
+    @Test
+    void testMapperWarnsForSkippingColumns() throws SQLException {
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultMapperImplementation.class);
+        TestLogAppender appender = new TestLogAppender();
+        appender.start();
+        logger.addAppender(appender);
+
+        RowMapper rowMapper = new DefaultMapperImplementation();
+        String sql = "SELECT id, name, email AS mail FROM users WHERE id = 2";
+
+        try (Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            // Check if a row was returned
+            assertTrue(rs.next(), "ResultSet should have a row.");
+
+            // Use your mapper to convert the ResultSet row to an object
+            User user = rowMapper.map(rs, User.class);
+
+            // Assert that the mapped object fields are correct
+            assertEquals(2, user.getId());
+            assertEquals("Bob", user.getName());
+            assertNull(user.getEmail());
+            assertEquals(0, user.getAge());
+            // Ensure no more rows exist
+            assertFalse(rs.next(), "ResultSet should only have one row.");
+
+            boolean found = appender.getEvents().stream()
+                    .anyMatch(e -> e.getFormattedMessage().contains("Column 'mail' does not exist"));
+
+            assertTrue(found, "Expected warning not found");
         }
     }
 }
