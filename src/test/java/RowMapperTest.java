@@ -40,7 +40,7 @@ public class RowMapperTest {
         map.put("name", new ColumnMetadata("name", User.class.getDeclaredField("name")));
         map.put("email", new ColumnMetadata("email", User.class.getDeclaredField("email")));
         map.put("age", new ColumnMetadata("age", User.class.getDeclaredField("age")));
-        MetadataStorage.register(new EntityMetadata("users", User.class, List.of(User.class.getDeclaredField("id")), map));
+        MetadataStorage.register(new EntityMetadata("users", User.class, List.of(User.class.getDeclaredField("id")), map, null));
     }
 
     @AfterAll
