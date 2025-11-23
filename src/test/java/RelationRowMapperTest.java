@@ -68,4 +68,48 @@ public class RelationRowMapperTest {
             assertEquals(LocalDate.of(2006, 1, 3), employees.get(1).getHire_date());
         }
     }
+
+    @Test
+    void testMultiJoinWithRecursionRelationRowMapper() throws SQLException {
+        String sql = HrScheme.RECURSIVEMULTIJOIN;
+
+        try (Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            //map result set of single join query
+            List<Employee> employees = rowMapper.mapWithRelations(rs, Employee.class);
+            assertFalse(employees.isEmpty());
+            assertEquals(4, employees.size());
+            Employee Neena = employees.getFirst();
+            assertEquals(101, Neena.getEmployee_id());
+            assertEquals("Neena", Neena.getFirst_name());
+            assertEquals("Kochhar", Neena.getLast_name());
+            assertEquals(LocalDate.of(2005, 9, 21), Neena.getHire_date());
+            Employee manager = Neena.getManager();
+            assertEquals(100, manager.getEmployee_id());
+            assertEquals("Steven", manager.getFirst_name());
+            assertEquals("King", manager.getLast_name());
+            assertEquals(LocalDate.of(2003, 6, 17), manager.getHire_date());
+            Department department = Neena.getDepartment();
+            assertEquals(20, department.getDepartment_id());
+            assertEquals("Marketing", department.getDepartment_name());
+            List<Employee> depEmployees = department.getEmployees();
+            assertEquals(2, depEmployees.size());
+            assertEquals(101, depEmployees.get(0).getEmployee_id());
+            assertEquals(104, depEmployees.get(1).getEmployee_id());
+
+            /*
+            //maybe try assertj recursive testing
+            Employee Steven = new Employee(100, "Steven", "King", LocalDate.of(2003, 6, 17));
+            Employee Neena = new Employee(101, "Neena", "Kochhar", LocalDate.of(2005, 9, 21));
+            Employee Lex = new Employee(102, "Lex", "De Hann", LocalDate.of(2001, 1, 13));
+            Employee Alexander = new Employee(103, "Alexander", "Hunold", LocalDate.of(2006, 1, 3));
+            Employee Bruce = new Employee(104, "Bruce", "Ernst", LocalDate.of(2007, 5, 21));
+            Department Administration = new Department(10, "Administration");
+            Department Marketing = new Department(20, "Marketing");
+            Department Purchasing = new Department(30, "Purchasing");
+            Department HR = new Department(40, "Human Resources");
+            */
+        }
+    }
 }

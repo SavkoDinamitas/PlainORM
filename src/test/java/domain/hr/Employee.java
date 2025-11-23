@@ -13,4 +13,12 @@ public class Employee {
     private String last_name;
     private LocalDate hire_date;
     private Department department;
+    private Employee manager;
+
+    public Employee(int employee_id, String first_name, String last_name, LocalDate hire_date) {
+        this.employee_id = employee_id;
+        this.first_name = first_name;
+        this.last_name = last_name;
+        this.hire_date = hire_date;
+    }
 }

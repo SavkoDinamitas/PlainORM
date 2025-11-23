@@ -28,6 +28,30 @@ public class HrScheme {
                 ON d.department_id = e.department_id
             WHERE d.department_id = 30;
             """;
+    @Language("SQL")
+    public static String RECURSIVEMULTIJOIN = """
+            SELECT
+                e.employee_id AS "employees.employee_id",
+                e.first_name AS "employees.first_name",
+                e.last_name AS "employees.last_name",
+                e.hire_date AS "employees.hire_date",
+                m.employee_id AS "employees.manager.employee_id",
+                m.first_name AS "employees.manager.first_name",
+                m.last_name AS "employees.manager.last_name",
+                m.hire_date AS "employees.manager.hire_date",
+                d.department_id AS "employees.department.department_id",
+                d.department_name AS "employees.department.department_name",
+                s.employee_id AS "employees.department.employees.employee_id",
+                s.first_name AS "employees.department.employees.first_name",
+                s.last_name AS "employees.department.employees.last_name",
+                s.hire_date AS "employees.department.employees.hire_date"
+            FROM employees e
+            JOIN employees m
+                ON e.manager_id = m.employee_id
+            JOIN departments d
+                ON e.department_id = d.department_id
+            JOIN employees s ON d.department_id = s.department_id;
+            """;
 
     @Language(value = "SQL")
     public static String SCRIPT = """
@@ -200,7 +224,14 @@ public class HrScheme {
                                 "department",
                                 RelationType.MANY_TO_ONE,
                                 Department.class
-                        ))
+                                ),
+                                new RelationMetadata(
+                                        Employee.class.getDeclaredField("manager"),
+                                        "manager",
+                                        RelationType.MANY_TO_ONE,
+                                        Employee.class
+                                        )
+                        )
                 )
         );
     }
