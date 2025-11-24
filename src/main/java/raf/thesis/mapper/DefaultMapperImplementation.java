@@ -68,15 +68,25 @@ public class DefaultMapperImplementation implements RowMapper {
                         instance = type.getDeclaredConstructor().newInstance();
                         rowInstances.put(joinedPath, instance);
                     }
-                    mapSingleProperty(instance, instance.getClass(), columnName, fieldName, rs, MetadataStorage.get(instance.getClass()));
+                    //map column in instance, handle null objects from DB
+                    if (!mapSingleProperty(instance, columnName, fieldName, rs))
+                        rowInstances.put(joinedPath, NullMarker.NULL);
                 }
                 //deduplicating objects by inserting in madeObjects map
                 for (var entry : rowInstances.entrySet()) {
+                    //skip null objects
+                    if (entry.getValue().equals(NullMarker.NULL)) {
+                        continue;
+                    }
                     madeObjects.putIfAbsent(getPrimaryKey(entry.getValue()), entry.getValue());
                 }
                 //solve relations
                 for (var freshObjectEntry : rowInstances.entrySet()) {
                     List<String> path = Arrays.stream(freshObjectEntry.getKey().split("\\.")).collect(Collectors.toList());
+                    //skip mapping null objects
+                    if (freshObjectEntry.getValue().equals(NullMarker.NULL)) {
+                        continue;
+                    }
                     //these are original object required to return
                     if (path.size() == 1) {
                         returningObjects.add(madeObjects.get(getPrimaryKey(freshObjectEntry.getValue())));
@@ -180,7 +190,7 @@ public class DefaultMapperImplementation implements RowMapper {
 
             for (int i = 1; i <= columnCount; i++) {
                 String columnName = rsMeta.getColumnLabel(i).toLowerCase();
-                mapSingleProperty(instance, clazz, columnName, columnName, rs, entityMetadata);
+                mapSingleProperty(instance, columnName, columnName, rs);
             }
 
             return instance;
@@ -189,14 +199,21 @@ public class DefaultMapperImplementation implements RowMapper {
         }
     }
 
-    private void mapSingleProperty(Object instance, Class<?> clazz, String resultSetColumnName, String columnName, ResultSet rs, EntityMetadata entityMetadata) {
+    //maps single column value to property in instance, returns false if DB null object mapping is detected
+    private boolean mapSingleProperty(Object instance, String resultSetColumnName, String columnName, ResultSet rs) {
         try {
+            Class<?> clazz = instance.getClass();
+            EntityMetadata entityMetadata = MetadataStorage.get(clazz);
+            //check if instance is nullObject
+            if (instance.equals(NullMarker.NULL))
+                return true;
+
             ColumnMetadata columnMetadata = entityMetadata.getColumns().get(columnName);
 
             if (columnMetadata == null) {
                 // Column doesn't belong to this entity -> skip for now
                 log.warn("Column '{}' does not exist in entity '{}'; skipping.", columnName, clazz.getSimpleName());
-                return;
+                return true;
             }
 
             Field field = columnMetadata.getField();
@@ -204,8 +221,15 @@ public class DefaultMapperImplementation implements RowMapper {
             Class<?> fieldType = field.getType();
             //convert primitive types to java wrappers for JDBC
             Object value = rs.getObject(resultSetColumnName, javaPrimitiveTypes(fieldType));
+            //check if field is PK and null -> db null object
+            List<Field> pkFields = entityMetadata.getIdFields();
+            if (pkFields.contains(field) && value == null) {
+                //flag for null object
+                return false;
+            }
             //populate field
             BeanUtils.setProperty(instance, fieldName, value);
+            return true;
         } catch (SQLException e) {
             throw new ResultSetAccessException(e);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -241,4 +265,8 @@ public class DefaultMapperImplementation implements RowMapper {
         primitiveTypes.put(double.class, Double.class);
         return primitiveTypes.getOrDefault(clazz, clazz);
     }
+
+    private enum NullMarker {NULL}
+
+    ;
 }
