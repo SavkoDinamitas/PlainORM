@@ -2,6 +2,7 @@ package util;
 
 import domain.hr.Department;
 import domain.hr.Employee;
+import domain.hr.Project;
 import org.intellij.lang.annotations.Language;
 import raf.thesis.metadata.ColumnMetadata;
 import raf.thesis.metadata.EntityMetadata;
@@ -40,6 +41,26 @@ public class HrScheme {
             FROM departments d
             LEFT OUTER JOIN employees e
                 ON d.department_id = e.department_id;
+            """;
+    @Language("SQL")
+    public static String MANYTOMANYJOIN = """
+            SELECT
+                p.project_id AS "projects.project_id",
+                p.project_name AS "projects.project_name",
+                e.employee_id AS "projects.employees.employee_id",
+                e.first_name AS "projects.employees.first_name",
+                e.last_name AS "projects.employees.last_name",
+                e.hire_date AS "projects.employees.hire_date",
+                r.project_id AS "projects.employees.projects.project_id",
+                r.project_name AS "projects.employees.projects.project_name"
+            FROM projects p
+            JOIN employee_projects ep
+                ON p.project_id = ep.project_id
+            JOIN employees e
+                ON ep.employee_id = e.employee_id
+            JOIN projects r
+                ON ep.project_id = r.project_id
+            ORDER BY p.project_id;
             """;
     @Language("SQL")
     public static String RECURSIVEMULTIJOIN = """
@@ -205,10 +226,53 @@ public class HrScheme {
                 (101, DATE '2004-01-01', DATE '2005-09-20', 'MK_REP', 20),
                 (103, DATE '2005-03-01', DATE '2006-01-02', 'IT_PROG', 30);
             
+            -- ==============================
+            --  PROJECTS (new table)
+            -- ==============================
+            CREATE TABLE projects (
+                project_id INT PRIMARY KEY,
+                project_name VARCHAR(100) NOT NULL
+            );
             
+            INSERT INTO projects (project_id, project_name) VALUES
+                (1, 'HR Onboarding System'),
+                (2, 'Internal Payroll Platform'),
+                (3, 'Corporate Website Redesign'),
+                (4, 'Mobile Sales Dashboard'),
+                (5, 'Cloud Migration Initiative');
+
+            -- ==============================
+            --  EMPLOYEE_PROJECTS (junction table, N:M)
+            -- ==============================
+            CREATE TABLE employee_projects (
+                employee_id INT NOT NULL,
+                project_id INT NOT NULL,
+                PRIMARY KEY (employee_id, project_id),
+                FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+                FOREIGN KEY (project_id)  REFERENCES projects(project_id)
+            );
+            -- Steven King – lead on internal systems
+            INSERT INTO employee_projects VALUES (100, 1);
+            INSERT INTO employee_projects VALUES (100, 2);
+            INSERT INTO employee_projects VALUES (100, 5);
+            
+            -- Neena Kochhar – HR and onboarding
+            INSERT INTO employee_projects VALUES (101, 1);
+            
+            -- Lex De Haan – website redesign & cloud
+            INSERT INTO employee_projects VALUES (102, 3);
+            INSERT INTO employee_projects VALUES (102, 5);
+            
+            -- Alexander Hunold – mobile dashboard
+            INSERT INTO employee_projects VALUES (103, 4);
+            
+            -- Bruce Ernst – works on payroll & mobile
+            INSERT INTO employee_projects VALUES (104, 2);
+            INSERT INTO employee_projects VALUES (104, 4);
             """;
 
     public static void fillMetadataManually() throws NoSuchFieldException {
+        //Departments
         Map<String, ColumnMetadata> map = new HashMap<>();
         map.put("department_id", new ColumnMetadata("department_id", Department.class.getDeclaredField("department_id")));
         map.put("department_name", new ColumnMetadata("department_name", Department.class.getDeclaredField("department_name")));
@@ -222,6 +286,7 @@ public class HrScheme {
                         "employees",
                         RelationType.ONE_TO_MANY,
                         Employee.class))));
+        //Employees
         Map<String, ColumnMetadata> emap = new HashMap<>();
         emap.put("employee_id", new ColumnMetadata("employee_id", Employee.class.getDeclaredField("employee_id")));
         emap.put("first_name", new ColumnMetadata("first_name", Employee.class.getDeclaredField("first_name")));
@@ -243,9 +308,32 @@ public class HrScheme {
                                         "manager",
                                         RelationType.MANY_TO_ONE,
                                         Employee.class
-                                        )
+                                        ),
+                                new RelationMetadata(
+                                        Employee.class.getDeclaredField("projects"),
+                                        "projects",
+                                        RelationType.MANY_TO_MANY,
+                                        Project.class,
+                                        "employees"
+                                )
                         )
                 )
         );
+        //Projects
+        //Departments
+        Map<String, ColumnMetadata> pmap = new HashMap<>();
+        pmap.put("project_id", new ColumnMetadata("project_id", Project.class.getDeclaredField("project_id")));
+        pmap.put("project_name", new ColumnMetadata("project_name", Project.class.getDeclaredField("project_name")));
+        MetadataStorage.register(new EntityMetadata(
+                "projects",
+                Project.class,
+                List.of(Project.class.getDeclaredField("project_id")),
+                pmap,
+                List.of(new RelationMetadata(
+                        Project.class.getDeclaredField("employees"),
+                        "employees",
+                        RelationType.MANY_TO_MANY,
+                        Employee.class,
+                        "projects"))));
     }
 }

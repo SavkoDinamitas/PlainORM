@@ -1,6 +1,7 @@
 import domain.User;
 import domain.hr.Department;
 import domain.hr.Employee;
+import domain.hr.Project;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -98,6 +99,47 @@ public class RelationRowMapperTest {
             List<Department> expected = List.of(Administration, Marketing, Purchasing, HR);
             //assertJ recursive comparison
             assertThat(departments).usingRecursiveComparison().isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void testManyToManyJoinRelationRowMapper() throws SQLException {
+        String sql = HrScheme.MANYTOMANYJOIN;
+
+        try (Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(sql)) {
+
+            //map result set of single join query
+            List<Project> projects = rowMapper.mapWithRelations(rs, Project.class);
+            // Check if a row was returned
+            assertFalse(projects.isEmpty());
+            //build how objects should look like
+            Employee Steven = new Employee(100, "Steven", "King", LocalDate.of(2003, 6, 17));
+            Employee Neena = new Employee(101, "Neena", "Kochhar", LocalDate.of(2005, 9, 21));
+            Employee Lex = new Employee(102, "Lex", "De Haan", LocalDate.of(2001, 1, 13));
+            Employee Alexander = new Employee(103, "Alexander", "Hunold", LocalDate.of(2006, 1, 3));
+            Employee Bruce = new Employee(104, "Bruce", "Ernst", LocalDate.of(2007, 5, 21));
+
+            Project Hr = new Project(1, "HR Onboarding System");
+            Project Payrol = new Project(2, "Internal Payroll Platform");
+            Project Website = new Project(3, "Corporate Website Redesign");
+            Project Mobile = new Project(4, "Mobile Sales Dashboard");
+            Project Cloud = new Project(5, "Cloud Migration Initiative");
+
+            Steven.setProjects(List.of(Hr, Payrol, Cloud));
+            Neena.setProjects(List.of(Hr));
+            Lex.setProjects(List.of(Website, Cloud));
+            Alexander.setProjects(List.of(Mobile));
+            Bruce.setProjects(List.of(Payrol, Mobile));
+
+            Hr.setEmployees(List.of(Steven, Neena));
+            Payrol.setEmployees(List.of(Steven, Bruce));
+            Website.setEmployees(List.of(Lex));
+            Mobile.setEmployees(List.of(Alexander, Bruce));
+            Cloud.setEmployees(List.of(Steven, Lex));
+            List<Project> expected = List.of(Hr, Payrol, Website, Mobile, Cloud);
+            //assertJ recursive comparison
+            assertThat(projects).usingRecursiveComparison().isEqualTo(expected);
         }
     }
 
