@@ -22,4 +22,7 @@ public class MetadataStorage {
     public static boolean contains(Class<?> clazz) {
         return ENTITIES.containsKey(clazz);
     }
+    public static Map<Class<?>, EntityMetadata> getAllData(){
+        return ENTITIES;
+    }
 }

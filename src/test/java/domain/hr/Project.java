@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import raf.thesis.metadata.annotations.Entity;
 
 import java.util.List;
 
@@ -11,6 +12,8 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+//check if scanner goes beyond his package
+@Entity(tableName = "xd")
 public class Project {
     private int project_id;
     private String project_name;
