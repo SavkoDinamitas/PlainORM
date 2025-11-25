@@ -87,7 +87,7 @@ public class MetadataScanner {
             meta.getIdFields().add(field);
         }
         if (field.isAnnotationPresent(Column.class)) {
-            Column columnAnn = clazz.getAnnotation(Column.class);
+            Column columnAnn = field.getAnnotation(Column.class);
             ColumnMetadata columnMeta = new ColumnMetadata();
 
             assert columnAnn != null;
@@ -97,7 +97,7 @@ public class MetadataScanner {
             columnMade = true;
         }
         if (field.isAnnotationPresent(OneToOne.class)) {
-            OneToOne oneAnn = clazz.getAnnotation(OneToOne.class);
+            OneToOne oneAnn = field.getAnnotation(OneToOne.class);
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert oneAnn != null;
@@ -115,7 +115,7 @@ public class MetadataScanner {
             columnMade = true;
         }
         if (field.isAnnotationPresent(OneToMany.class)) {
-            OneToMany ann = clazz.getAnnotation(OneToMany.class);
+            OneToMany ann = field.getAnnotation(OneToMany.class);
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert ann != null;
@@ -133,7 +133,7 @@ public class MetadataScanner {
             columnMade = true;
         }
         if (field.isAnnotationPresent(ManyToOne.class)) {
-            ManyToOne ann = clazz.getAnnotation(ManyToOne.class);
+            ManyToOne ann = field.getAnnotation(ManyToOne.class);
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert ann != null;
@@ -150,7 +150,7 @@ public class MetadataScanner {
             columnMade = true;
         }
         if (field.isAnnotationPresent(ManyToMany.class)) {
-            ManyToMany ann = clazz.getAnnotation(ManyToMany.class);
+            ManyToMany ann = field.getAnnotation(ManyToMany.class);
             RelationMetadata relationMetadata = new RelationMetadata();
             assert ann != null;
             relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
