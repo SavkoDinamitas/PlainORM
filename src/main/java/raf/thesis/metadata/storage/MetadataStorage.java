@@ -19,4 +19,7 @@ public class MetadataStorage {
     public static EntityMetadata get(String tableName) {
         return TABLEMETADATA.get(tableName);
     }
+    public static boolean contains(Class<?> clazz) {
+        return ENTITIES.containsKey(clazz);
+    }
 }
