@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface ManyToMany {
-    String relationName();
+    String relationName() default "";
     String joinedTableName();
-    String[] myKey();
-    String[] theirKey();
+    String[] myKey() default {};
+    String[] theirKey() default {};
 }

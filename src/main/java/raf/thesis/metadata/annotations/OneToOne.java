@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface OneToOne {
-    String relationName();
-    String[] foreignKey();
+    String relationName() default "";
+    String[] foreignKey() default {};
 }

@@ -91,7 +91,7 @@ public class MetadataScanner {
             ColumnMetadata columnMeta = new ColumnMetadata();
 
             assert columnAnn != null;
-            columnMeta.setColumnName(columnAnn.columnName() != null ? columnAnn.columnName() : field.getName());
+            columnMeta.setColumnName(!columnAnn.columnName().isEmpty() ? columnAnn.columnName() : field.getName());
             columnMeta.setField(field);
             meta.getColumns().put(columnMeta.getColumnName(), columnMeta);
             columnMade = true;
@@ -101,11 +101,11 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert oneAnn != null;
-            relationMetadata.setRelationName(oneAnn.relationName() != null ? oneAnn.relationName() : field.getName());
+            relationMetadata.setRelationName(!oneAnn.relationName().isEmpty() ? oneAnn.relationName() : field.getName());
             relationMetadata.setRelationType(RelationType.ONE_TO_ONE);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(field.getType());
-            if (oneAnn.foreignKey() == null) {
+            if (oneAnn.foreignKey().length == 0) {
                 solveForeignKeys.add(relationMetadata);
             } else {
                 relationMetadata.setForeignKeyNames(List.of(oneAnn.foreignKey()));
@@ -119,11 +119,11 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert ann != null;
-            relationMetadata.setRelationName(ann.relationName() != null ? ann.relationName() : field.getName());
+            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
             relationMetadata.setRelationType(RelationType.ONE_TO_MANY);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(getListElementType(clazz, field, RelationType.ONE_TO_MANY));
-            if (ann.foreignKey() == null) {
+            if (ann.foreignKey().length == 0) {
                 solveForeignKeys.add(relationMetadata);
             } else {
                 relationMetadata.setForeignKeyNames(List.of(ann.foreignKey()));
@@ -137,11 +137,11 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert ann != null;
-            relationMetadata.setRelationName(ann.relationName() != null ? ann.relationName() : field.getName());
+            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
             relationMetadata.setRelationType(RelationType.MANY_TO_ONE);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(field.getType());
-            if (ann.foreignKey() == null) {
+            if (ann.foreignKey().length == 0) {
                 solveForeignKeys.add(relationMetadata);
             }
             relationMetadata.setForeignKeyNames(List.of(ann.foreignKey()));
@@ -153,7 +153,7 @@ public class MetadataScanner {
             ManyToMany ann = clazz.getAnnotation(ManyToMany.class);
             RelationMetadata relationMetadata = new RelationMetadata();
             assert ann != null;
-            relationMetadata.setRelationName(ann.relationName() != null ? ann.relationName() : field.getName());
+            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
             relationMetadata.setRelationType(RelationType.MANY_TO_MANY);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(getListElementType(clazz, field, RelationType.MANY_TO_MANY));
@@ -162,12 +162,12 @@ public class MetadataScanner {
             }
             relationMetadata.setJoinedTableName(ann.joinedTableName());
             boolean solve = false;
-            if (ann.myKey() == null) {
+            if (ann.myKey().length == 0) {
                 solve = true;
             } else {
                 relationMetadata.setMyJoinedTableFks(List.of(ann.myKey()));
             }
-            if (ann.theirKey() == null) {
+            if (ann.theirKey().length == 0) {
                 solve = true;
             } else {
                 relationMetadata.setForeignKeyNames(List.of(ann.theirKey()));
