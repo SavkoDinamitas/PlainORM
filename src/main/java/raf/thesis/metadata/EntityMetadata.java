@@ -15,7 +15,7 @@ import java.util.Map;
 public class EntityMetadata {
     private String tableName;
     private Class<?> entityClass;
-    private List<Field> idFields;
+    private List<Field> idFields = new ArrayList<>();
     //TODO: make these keys lowercase always!!
     private Map<String, ColumnMetadata> columns = new HashMap<>();
     private List<RelationMetadata> relations = new ArrayList<>();
