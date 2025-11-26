@@ -25,4 +25,8 @@ public class MetadataStorage {
     public static Map<Class<?>, EntityMetadata> getAllData(){
         return ENTITIES;
     }
+    public static void removeAll(){
+        ENTITIES.clear();
+        TABLEMETADATA.clear();
+    }
 }

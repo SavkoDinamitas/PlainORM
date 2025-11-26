@@ -1,4 +1,4 @@
-package discovery;
+package discovery.test1;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
