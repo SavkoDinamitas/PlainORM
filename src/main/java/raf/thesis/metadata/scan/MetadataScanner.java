@@ -80,6 +80,9 @@ public class MetadataScanner {
         for (var field : clazz.getDeclaredFields()) {
             processField(field, clazz, meta);
         }
+        if(meta.getIdFields().isEmpty()){
+            throw new RequiredFieldException("Entity " + clazz.getSimpleName() + " requires id fields");
+        }
         MetadataStorage.register(meta);
     }
 
@@ -93,7 +96,7 @@ public class MetadataScanner {
             ColumnMetadata columnMeta = new ColumnMetadata();
 
             assert columnAnn != null;
-            columnMeta.setColumnName(!columnAnn.columnName().isEmpty() ? columnAnn.columnName() : field.getName());
+            columnMeta.setColumnName(!columnAnn.columnName().isEmpty() ? columnAnn.columnName().toLowerCase() : field.getName().toLowerCase());
             columnMeta.setField(field);
             meta.getColumns().put(columnMeta.getColumnName(), columnMeta);
             columnMade = true;
@@ -103,7 +106,7 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert oneAnn != null;
-            relationMetadata.setRelationName(!oneAnn.relationName().isEmpty() ? oneAnn.relationName() : field.getName());
+            relationMetadata.setRelationName(!oneAnn.relationName().isEmpty() ? oneAnn.relationName().toLowerCase() : field.getName().toLowerCase());
             relationMetadata.setRelationType(RelationType.ONE_TO_ONE);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(field.getType());
@@ -121,7 +124,7 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert ann != null;
-            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
+            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName().toLowerCase() : field.getName().toLowerCase());
             relationMetadata.setRelationType(RelationType.ONE_TO_MANY);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(getListElementType(clazz, field, RelationType.ONE_TO_MANY));
@@ -139,14 +142,14 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert ann != null;
-            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
+            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName().toLowerCase() : field.getName().toLowerCase());
             relationMetadata.setRelationType(RelationType.MANY_TO_ONE);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(field.getType());
             if (ann.foreignKey().length == 0) {
                 solveForeignKeys.add(relationMetadata);
-            }
-            relationMetadata.setForeignKeyNames(List.of(ann.foreignKey()));
+            } else
+                relationMetadata.setForeignKeyNames(List.of(ann.foreignKey()));
             madeRelations.add(relationMetadata);
             meta.getRelations().add(relationMetadata);
             columnMade = true;
@@ -155,7 +158,7 @@ public class MetadataScanner {
             ManyToMany ann = field.getAnnotation(ManyToMany.class);
             RelationMetadata relationMetadata = new RelationMetadata();
             assert ann != null;
-            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName() : field.getName());
+            relationMetadata.setRelationName(!ann.relationName().isEmpty() ? ann.relationName().toLowerCase() : field.getName().toLowerCase());
             relationMetadata.setRelationType(RelationType.MANY_TO_MANY);
             relationMetadata.setForeignField(field);
             relationMetadata.setForeignClass(getListElementType(clazz, field, RelationType.MANY_TO_MANY));
@@ -227,7 +230,7 @@ public class MetadataScanner {
         if (relationMetadata.getForeignKeyNames() == null) {
             relationMetadata.setForeignKeyNames(new ArrayList<>());
             for (var pk : foreignEntity.getIdFields()) {
-                relationMetadata.getForeignKeyNames().add(pk.getName());
+                relationMetadata.getForeignKeyNames().add(pk.getName().toLowerCase());
             }
         }
         if (relationMetadata.getRelationType() == RelationType.MANY_TO_MANY) {
@@ -235,7 +238,7 @@ public class MetadataScanner {
             if (relationMetadata.getMyJoinedTableFks() == null) {
                 relationMetadata.setMyJoinedTableFks(new ArrayList<>());
                 for (var pk : myEntity.getIdFields()) {
-                    relationMetadata.getMyJoinedTableFks().add(pk.getName());
+                    relationMetadata.getMyJoinedTableFks().add(pk.getName().toLowerCase());
                 }
             }
         }
