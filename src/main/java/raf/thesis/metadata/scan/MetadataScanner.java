@@ -9,6 +9,7 @@ import raf.thesis.metadata.EntityMetadata;
 import raf.thesis.metadata.RelationMetadata;
 import raf.thesis.metadata.RelationType;
 import raf.thesis.metadata.annotations.*;
+import raf.thesis.metadata.exception.DuplicateRelationNamesException;
 import raf.thesis.metadata.exception.ListFieldRequiredException;
 import raf.thesis.metadata.exception.RequiredFieldException;
 import raf.thesis.metadata.exception.UnsupportedRelationException;
@@ -18,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -80,9 +82,20 @@ public class MetadataScanner {
         for (var field : clazz.getDeclaredFields()) {
             processField(field, clazz, meta);
         }
+
+        //check if class has marked primary keys
         if(meta.getIdFields().isEmpty()){
             throw new RequiredFieldException("Entity " + clazz.getSimpleName() + " requires id fields");
         }
+
+        //check for relation duplication
+        Set<String> relNames = new HashSet<>();
+        for(var relation : meta.getRelations()){
+            if(!relNames.add(relation.getRelationName()))
+                throw new DuplicateRelationNamesException("Multiple relations with name '" + relation.getRelationName() + "' in class "
+                        + meta.getClass().getSimpleName() + ". Relation names must be unique inside class!");
+        }
+
         MetadataStorage.register(meta);
     }
 
