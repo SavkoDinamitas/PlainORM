@@ -2,11 +2,10 @@ package raf.thesis.query.tree;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 @AllArgsConstructor
 @Getter
-@Setter
-public class WhereNode {
-    Expression expression;
+public class FieldNode implements Expression{
+    private String fieldName;
+    private String tableAlias;
 }

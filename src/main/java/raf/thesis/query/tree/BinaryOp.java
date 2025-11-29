@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@AllArgsConstructor
+@Getter @Setter
 @NoArgsConstructor
-@Getter
-@Setter
-public class LimitNode {
-    private int limit;
-    private int offset;
+public class BinaryOp implements Expression{
+    private Expression left, right;
+    private BinaryOpCode code;
 }

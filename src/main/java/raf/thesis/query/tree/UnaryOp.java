@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class HavingNode {
-    private Expression expression;
+public class UnaryOp implements Expression{
+    private Expression exp;
+    private UnaryOpCode code;
 }

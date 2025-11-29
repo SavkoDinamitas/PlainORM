@@ -16,23 +16,20 @@ public class QueryBuilderTest {
 
     @Test
     public void testSingleJoinGeneration(){
-        QueryBuilder qb = new QueryBuilder();
-        String check = qb.select(Crew.class).join("pilot").generateJoinClauses();
+        String check = QueryBuilder.select(Crew.class).join("pilot").generateJoinClauses();
         assertEquals("INNER JOIN pilots AS \"pilot\" ON ((\"pilot\".pilotid) = (\"%root\".pilotid))\n", check);
     }
 
     @Test
     public void testManyToManyJoinGeneration(){
-        QueryBuilder qb = new QueryBuilder();
-        String check = qb.select(Airplane.class).join("flights").generateJoinClauses();
+        String check = QueryBuilder.select(Airplane.class).join("flights").generateJoinClauses();
         assertEquals("INNER JOIN airplanes_flights AS \"airplanes_flights\" ON ((\"airplanes_flights\".id) = (\"%root\".id))\n" +
                 "INNER JOIN flights AS \"flights\" ON ((\"flights\".flightnumber) = (\"airplanes_flights\".flightnumber))\n", check);
     }
 
     @Test
     public void testInDepthJoinGeneration(){
-        QueryBuilder qb = new QueryBuilder();
-        String check = qb.select(Airplane.class).join("flights").join("flights.crew").join("flights.crew.pilot").generateJoinClauses();
+        String check = QueryBuilder.select(Airplane.class).join("flights").join("flights.crew").join("flights.crew.pilot").generateJoinClauses();
         assertEquals("INNER JOIN airplanes_flights AS \"airplanes_flights\" ON ((\"airplanes_flights\".id) = (\"%root\".id))\n" +
                 "INNER JOIN flights AS \"flights\" ON ((\"flights\".flightnumber) = (\"airplanes_flights\".flightnumber))\n" +
                 "INNER JOIN crews AS \"flights.crew\" ON ((\"flights.crew\".crewid) = (\"flights\".crewid))\n" +

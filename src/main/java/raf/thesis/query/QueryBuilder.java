@@ -1,7 +1,5 @@
 package raf.thesis.query;
 
-
-import lombok.NoArgsConstructor;
 import raf.thesis.metadata.EntityMetadata;
 import raf.thesis.metadata.RelationMetadata;
 import raf.thesis.metadata.RelationType;
@@ -9,28 +7,40 @@ import raf.thesis.metadata.storage.MetadataStorage;
 import raf.thesis.query.dialect.ANSISQLDialect;
 import raf.thesis.query.dialect.Dialect;
 import raf.thesis.query.exceptions.InvalidRelationPathException;
-import raf.thesis.query.tree.JoinNode;
-import raf.thesis.query.tree.SelectNode;
+import raf.thesis.query.tree.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 
-@NoArgsConstructor
 public class QueryBuilder {
-    private SelectNode rootSelectNode;
-    private Map<String, String> joinTableAliases = new HashMap<>();
-    private final String baseAlias = "%root";
-    private Dialect dialect = new ANSISQLDialect();
+    protected final SelectNode rootSelectNode;
+    private final Map<String, String> joinTableAliases = new HashMap<>();
+    protected final String baseAlias = "%root";
+    protected final Dialect dialect = new ANSISQLDialect();
     /**
      * Set root object of query builder to specify type that is returned
      * @param object .class of entity a query should return
-     * @return updated query builder
+     * @return new query builder instance with set root
      */
-    public QueryBuilder select(Class<?> object){
-        rootSelectNode = new SelectNode(object);
-        return this;
+    public static QueryBuilder select(Class<?> object){
+        SelectNode sn = new SelectNode(object);
+        return new QueryBuilder(sn);
     }
 
+    /**
+     * Special constructor for SubQuery builder, do not use for regular query building
+     * @param object root table for subquery builder
+     * @param columns columns subquery should return
+     * @return new instance of subquery builder
+     */
+    public static SubQueryBuilder select(Class<?> object, List<String> columns){
+        return new SubQueryBuilder(object, columns);
+    }
+
+    protected QueryBuilder(SelectNode rootSelectNode){
+        this.rootSelectNode = rootSelectNode;
+    }
     /**
      * Add distinct keyword in query
      * @return updated query builder
@@ -62,37 +72,43 @@ public class QueryBuilder {
 
     /**
      * Specify where clause for query
-     * @param condition condition inside where clause
+     * @param expression expression inside where clause
      * @return updated query builder
      */
-    public QueryBuilder where(ConditionBuilder condition){
+    public QueryBuilder where(Expression expression){
+        rootSelectNode.setWhereNode(new WhereNode(expression));
         return this;
     }
 
     /**
      * Specify having clause for query
-     * @param condition condition inside having clause
+     * @param expression expression inside having clause
      * @return updated query builder
      */
-    public QueryBuilder having(ConditionBuilder condition){
+    public QueryBuilder having(Expression expression){
+        rootSelectNode.setHavingNode(new HavingNode(expression));
         return this;
     }
 
     /**
      * Specify groupBy clause for query
-     * @param fieldPath dot separated relation path to field
+     * @param e1 first expression
+     * @param expressions other expressions
      * @return updated query builder
      */
-    public QueryBuilder groupBy(String... fieldPath){
+    public QueryBuilder groupBy(Expression e1, Expression... expressions){
+        rootSelectNode.setGroupByNode(new GroupByNode(Stream.concat(Stream.of(e1), Stream.of(expressions)).toList()));
         return this;
     }
 
     /**
-     * Specify orderBy clause for query
-     * @param fieldPath dot separated relation path to field
+     * Specify orderBy clause for query, use {@link ConditionBuilder#asc} and {@link ConditionBuilder#desc} static functions to create them
+     * @param orderByNode first order by node for sorting
+     * @param others other order by nodes
      * @return updated query builder
      */
-    public QueryBuilder orderBy(String... fieldPath){
+    public QueryBuilder orderBy(OrderByNode orderByNode, OrderByNode... others){
+        rootSelectNode.setOrderByNodes(Stream.concat(Stream.of(orderByNode), Stream.of(others)).toList());
         return this;
     }
 
@@ -102,6 +118,7 @@ public class QueryBuilder {
      * @return updated query builder
      */
     public QueryBuilder limit(int limit){
+        rootSelectNode.setLimit(limit);
         return this;
     }
 
@@ -111,6 +128,7 @@ public class QueryBuilder {
      * @return updated query builder
      */
     public QueryBuilder offset(int offset){
+        rootSelectNode.setOffset(offset);
         return this;
     }
 

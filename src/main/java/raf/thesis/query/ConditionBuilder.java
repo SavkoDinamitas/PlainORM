@@ -1,6 +1,9 @@
 package raf.thesis.query;
 
 import lombok.NoArgsConstructor;
+import raf.thesis.query.tree.*;
+
+import java.util.List;
 
 @SuppressWarnings("ClassEscapesDefinedScope")
 @NoArgsConstructor
@@ -10,95 +13,91 @@ public class ConditionBuilder {
      * @param fieldPath dot separated relation path to field
      * @return updated condition builder
      */
-    public ConditionBuilder field(String fieldPath) {
-        return this;
+    public static FieldNode field(String fieldPath) {
+        return null;
     }
 
-    public ConditionBuilder gt(String value){
-        return this;
-    }
-    public ConditionBuilder gt(QueryBuilder subQuery){
-        return this;
+    public static Literal lit(String value){
+        return new Literal.StringCnst(value);
     }
 
-    public ConditionBuilder lt(String value){
-        return this;
-    }
-    public ConditionBuilder lt(QueryBuilder subQuery){
-        return this;
+    public static Literal lit(long value){
+        return new Literal.LongCnst(value);
     }
 
-    public ConditionBuilder eq(String value){
-        return this;
-    }
-    public ConditionBuilder eq(QueryBuilder subQuery){
-        return this;
+    public static Literal lit(double value){
+        return new Literal.DoubleCnst(value);
     }
 
-    public ConditionBuilder like(String pattern){
-        return this;
+    public static TupleNode tuple(Expression... expressions){
+        return new TupleNode(List.of(expressions));
     }
 
-    public ConditionBuilder in(String... values){
-        return this;
-    }
-    public ConditionBuilder in(QueryBuilder subQuery){
-        return this;
+    public static OrderByNode asc(Expression expression){
+        return new OrderByNode(expression, Ordering.ASC);
     }
 
-    public ConditionBuilder isNull(){
-        return this;
+    public static OrderByNode desc(Expression expression){
+        return new OrderByNode(expression, Ordering.DESC);
     }
 
-    public ConditionBuilder exists(QueryBuilder subquery){
-        return this;
+    public static FunctionNode avg(Expression expression, Distinct distinct){
+        return new FunctionNode(expression, FunctionCode.AVG, true);
+    }
+    public static FunctionNode avg(Expression expression){
+        return new FunctionNode(expression, FunctionCode.AVG, false);
     }
 
-    public static ConditionBuilder avg(Distinct distinct, String fieldPath){
-        return new ConditionBuilder();
+    public static FunctionNode sum(Expression expression, Distinct distinct){
+        return new FunctionNode(expression, FunctionCode.SUM, true);
     }
-    public static ConditionBuilder avg(String fieldPath){
-        return avg(null, fieldPath);
-    }
-
-    public static ConditionBuilder sum(Distinct distinct, String fieldPath){
-        return new ConditionBuilder();
-    }
-    public static ConditionBuilder sum(String fieldPath){
-        return sum(null, fieldPath);
+    public static FunctionNode sum(Expression expression){
+        return new FunctionNode(expression, FunctionCode.SUM, false);
     }
 
-    public static ConditionBuilder max(Distinct distinct, String fieldPath){
-        return new ConditionBuilder();
+    public static FunctionNode max(Expression expression, Distinct distinct){
+        return new FunctionNode(expression, FunctionCode.MAX, true);
     }
-    public static ConditionBuilder max(String fieldPath){
-        return max(null, fieldPath);
-    }
-
-    public static ConditionBuilder min(Distinct distinct, String fieldPath){
-        return new ConditionBuilder();
-    }
-    public static ConditionBuilder min(String fieldPath){
-        return min(null, fieldPath);
+    public static FunctionNode max(Expression expression){
+        return new FunctionNode(expression, FunctionCode.MAX, false);
     }
 
-    public static ConditionBuilder count(Distinct distinct, String fieldPath){
-        return new ConditionBuilder();
+    public static FunctionNode min(Expression expression, Distinct distinct){
+        return new FunctionNode(expression, FunctionCode.MIN, true);
     }
-    public static ConditionBuilder count(String fieldPath){
-        return count(null, fieldPath);
-    }
-
-    public static ConditionBuilder and(ConditionBuilder... conditions){
-        return new ConditionBuilder();
+    public static FunctionNode min(Expression expression){
+        return new FunctionNode(expression, FunctionCode.MIN, false);
     }
 
-    public static ConditionBuilder or(ConditionBuilder... conditions){
-        return new ConditionBuilder();
+    public static FunctionNode count(Expression expression, Distinct distinct){
+        return new FunctionNode(expression, FunctionCode.COUNT, true);
+    }
+    public static FunctionNode count(Expression expression){
+        return new FunctionNode(expression, FunctionCode.COUNT, false);
     }
 
-    public static ConditionBuilder not(ConditionBuilder conditions){
-        return new ConditionBuilder();
+    public static BinaryOp and(Expression c1, Expression c2, Expression... cRest){
+        if (cRest.length > 0) {
+            var result = cRest[cRest.length - 1];
+            for (int i = cRest.length - 2; i >= 0; i--)
+                result = new BinaryOp(cRest[i], result, BinaryOpCode.AND);
+            return new BinaryOp(c1, new BinaryOp(c2, result, BinaryOpCode.AND), BinaryOpCode.AND);
+        }
+        return new BinaryOp(c1, c2, BinaryOpCode.AND);
+    }
+
+    public static BinaryOp or(Expression c1, Expression c2, Expression... cRest){
+        if (cRest.length > 0) {
+            var result = cRest[cRest.length - 1];
+            for (int i = cRest.length - 2; i >= 0; i--)
+                result = new BinaryOp(cRest[i], result, BinaryOpCode.OR);
+            return new BinaryOp(c1, new BinaryOp(c2, result, BinaryOpCode.OR), BinaryOpCode.OR);
+        }
+        return new BinaryOp(c1, c2, BinaryOpCode.OR);
+    }
+
+    public static UnaryOp not(Expression expression){
+        return new UnaryOp(expression, UnaryOpCode.NOT);
     }
 
     private static class Distinct { public String toString() { return "DISTINCT"; } }
