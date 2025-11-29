@@ -9,6 +9,7 @@ import java.util.List;
 public class SelectNode {
     @Getter
     private final Class<?> root;
+    @Getter
     private List<JoinNode> joinNodes = new ArrayList<>();
     private WhereNode whereNode;
     private HavingNode havingNode;
