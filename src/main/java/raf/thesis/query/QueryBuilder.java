@@ -4,17 +4,24 @@ package raf.thesis.query;
 import lombok.NoArgsConstructor;
 import raf.thesis.metadata.EntityMetadata;
 import raf.thesis.metadata.storage.MetadataStorage;
+import raf.thesis.query.exceptions.InvalidRelationPathException;
+import raf.thesis.query.tree.JoinNode;
+import raf.thesis.query.tree.SelectNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
-@SuppressWarnings("ClassEscapesDefinedScope")
 @NoArgsConstructor
 public class QueryBuilder {
+    private SelectNode rootSelectNode;
     /**
      * Set root object of query builder to specify type that is returned
      * @param object .class of entity a query should return
      * @return updated query builder
      */
     public QueryBuilder select(Class<?> object){
+        rootSelectNode = new SelectNode(object);
         return this;
     }
 
@@ -32,16 +39,18 @@ public class QueryBuilder {
      * @return updated query builder
      */
     public QueryBuilder join(String relationPath){
+        rootSelectNode.addJoinNode(generateJoinNode(rootSelectNode.getRoot(), relationPath, INNER));
         return this;
     }
 
     /**
      * Specify which relations should be populated in returning objects
      * @param relationPath dot separated relation path from root entity
-     * @param left boolean to determine type of join, left is true -> left join, left is false -> inner join
+     * @param join determine type of join, LEFT, INNER, RIGHT or FULL
      * @return updated query builder
      */
-    public QueryBuilder join(String relationPath, boolean left){
+    public QueryBuilder join(String relationPath, Join join){
+        rootSelectNode.addJoinNode(generateJoinNode(rootSelectNode.getRoot(), relationPath, join));
         return this;
     }
 
@@ -107,22 +116,51 @@ public class QueryBuilder {
         return "";
     }
 
+    private JoinNode generateJoinNode(Class<?> root, String joiningRelationPath, Join joinType){
+        //fill joining table fields
+        Class<?> joiningClass = findInstanceType(joiningRelationPath, root);
+        EntityMetadata joiningMetadata = MetadataStorage.get(joiningClass);
+        String tableName = joiningMetadata.getTableName();
+        List<String> joiningTablePk = extractKeys(joiningMetadata);
+
+        //fill foreign table fields
+        String foreignTableAlias = joiningRelationPath.substring(0, joiningRelationPath.lastIndexOf("."));
+        Class<?> foreignClass = findInstanceType(foreignTableAlias, root);
+        EntityMetadata foreignMetadata = MetadataStorage.get(foreignClass);
+        List<String> foreignTableFk = extractKeys(foreignMetadata);
+        return new JoinNode(joinType, tableName, joiningRelationPath, joiningTablePk, foreignTableAlias, foreignTableFk);
+    }
+
     //traverse through path to find right class
     private Class<?> findInstanceType(String path, Class<?> start) {
         Class<?> current = start;
         for (String s : path.split("\\.")) {
             EntityMetadata currMeta = MetadataStorage.get(current);
+            boolean found = false;
             for (var relation : currMeta.getRelations()) {
                 if (relation.getRelationName().equalsIgnoreCase(s)) {
                     current = relation.getForeignClass();
+                    found = true;
                     break;
                 }
             }
+            if(!found)
+                throw new InvalidRelationPathException("Invalid relation path: " + path);
         }
         return current;
     }
 
-    private static enum Join{LEFT, INNER, RIGHT, FULL};
+    //returns the list of columns that are primary keys in given entity
+    private List<String> extractKeys(EntityMetadata metadata){
+        List<String> keys = new ArrayList<>();
+        for(var column : metadata.getColumns().values()){
+            if(metadata.getIdFields().contains(column.getField())){
+                keys.add(column.getColumnName());
+            }
+        }
+        return keys;
+    }
+
     public final Join LEFT = Join.LEFT;
     public final Join INNER = Join.INNER;
     public final Join RIGHT = Join.RIGHT;
