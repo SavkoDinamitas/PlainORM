@@ -12,7 +12,28 @@ public class ANSISQLDialect implements Dialect {
 
     @Override
     public String generateSelectClause(SelectNode select) {
-        return "";
+        return "SELECT\n%s\n FROM %s AS %s".formatted(generateFields(select.getSelectFieldNodes(), select.getBaseAlias()), select.getBaseTableName(), quote(select.getBaseAlias()));
+    }
+
+    private String generateFields(List<Expression> fieldNodes, String baseAlias){
+        StringBuilder sb = new StringBuilder();
+        //TODO: change for expressions after implementing .toSql()
+        for(Expression exp : fieldNodes){
+            FieldNode fieldNode = (FieldNode) exp;
+            String row = "%s.%s AS %s".formatted(quote(fieldNode.getTableAlias()),
+                    fieldNode.getFieldName(),
+                    quote("%s%s.%s".formatted(handleRootField(fieldNode.getTableAlias(), baseAlias), fieldNode.getTableAlias(), fieldNode.getFieldName())));
+            sb.append(row).append(",\n");
+        }
+        sb.delete(sb.length()-2, sb.length());
+        return sb.toString();
+    }
+
+    private String handleRootField(String tableAlias, String baseRoot){
+        if(tableAlias.equals(baseRoot)){
+            return "";
+        }
+        return baseRoot + ".";
     }
 
     @Override

@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 public class QueryBuilder {
     protected final SelectNode rootSelectNode;
     private final Map<String, String> joinTableAliases = new HashMap<>();
-    protected final String baseAlias = "%root";
     protected final Dialect dialect = new ANSISQLDialect();
     /**
      * Set root object of query builder to specify type that is returned
@@ -24,7 +23,7 @@ public class QueryBuilder {
      * @return new query builder instance with set root
      */
     public static QueryBuilder select(Class<?> object){
-        SelectNode sn = new SelectNode(object);
+        SelectNode sn = new SelectNode(object, MetadataStorage.get(object).getTableName());
         return new QueryBuilder(sn);
     }
 
@@ -40,6 +39,7 @@ public class QueryBuilder {
 
     protected QueryBuilder(SelectNode rootSelectNode){
         this.rootSelectNode = rootSelectNode;
+        handleRootColumns(rootSelectNode.getRoot());
     }
     /**
      * Add distinct keyword in query
@@ -56,6 +56,7 @@ public class QueryBuilder {
      */
     public QueryBuilder join(String relationPath){
         rootSelectNode.addJoinNode(generateJoinNode(rootSelectNode.getRoot(), relationPath, INNER));
+        handleJoinedTableColumns(relationPath);
         return this;
     }
 
@@ -67,6 +68,7 @@ public class QueryBuilder {
      */
     public QueryBuilder join(String relationPath, Join join){
         rootSelectNode.addJoinNode(generateJoinNode(rootSelectNode.getRoot(), relationPath, join));
+        handleJoinedTableColumns(relationPath);
         return this;
     }
 
@@ -146,7 +148,7 @@ public class QueryBuilder {
         if(joiningRelationPath.split("\\.").length > 1)
             foreignTableAlias = joiningRelationPath.substring(0, joiningRelationPath.lastIndexOf("."));
         else
-            foreignTableAlias = baseAlias;
+            foreignTableAlias = rootSelectNode.getBaseAlias();
         Class<?> foreignClass = findInstanceType(foreignTableAlias, root);
         EntityMetadata foreignMetadata = MetadataStorage.get(foreignClass);
         String relationName = joiningRelationPath.substring(joiningRelationPath.lastIndexOf(".") + 1);
@@ -182,7 +184,7 @@ public class QueryBuilder {
     //traverse through path to find right class
     private Class<?> findInstanceType(String path, Class<?> start) {
         Class<?> current = start;
-        if(path.equals(baseAlias))
+        if(path.equals(rootSelectNode.getBaseAlias()))
             return start;
         for (String s : path.split("\\.")) {
             EntityMetadata currMeta = MetadataStorage.get(current);
@@ -211,6 +213,24 @@ public class QueryBuilder {
         return keys;
     }
 
+    //handles root columns
+    private void handleRootColumns(Class<?> root){
+        extractColumns(MetadataStorage.get(root), rootSelectNode.getBaseAlias());
+    }
+
+    private void handleJoinedTableColumns(String relationPath){
+        Class<?> entity = findInstanceType(relationPath, rootSelectNode.getRoot());
+        extractColumns(MetadataStorage.get(entity), relationPath);
+    }
+
+    //makes list of FieldNodes and adds to select clause
+    private void extractColumns(EntityMetadata metadata, String tableAlias){
+        for(var column : metadata.getColumns().values()){
+            FieldNode node = new FieldNode(column.getColumnName(), tableAlias);
+            rootSelectNode.addSelectClauseColumn(node);
+        }
+    }
+
     public String generateJoinClauses(){
         StringBuilder builder = new StringBuilder();
         for(var join : rootSelectNode.getJoinNodes()){
@@ -218,6 +238,10 @@ public class QueryBuilder {
             builder.append("\n");
         }
         return builder.toString();
+    }
+
+    public String generateSelectClause(){
+        return dialect.generateSelectClause(rootSelectNode);
     }
 
     public final Join LEFT = Join.LEFT;

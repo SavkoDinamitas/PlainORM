@@ -6,10 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
 public class EntityMetadata {
@@ -17,6 +14,6 @@ public class EntityMetadata {
     private Class<?> entityClass;
     private List<Field> idFields = new ArrayList<>();
     //TODO: make these keys lowercase always!!
-    private Map<String, ColumnMetadata> columns = new HashMap<>();
+    private Map<String, ColumnMetadata> columns = new LinkedHashMap<>();
     private List<RelationMetadata> relations = new ArrayList<>();
 }

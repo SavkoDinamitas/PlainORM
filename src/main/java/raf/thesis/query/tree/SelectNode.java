@@ -11,7 +11,12 @@ public class SelectNode {
     @Getter
     private final Class<?> root;
     @Getter
+    private final String baseAlias = "%root";
+    @Getter
+    private final String baseTableName;
+    @Getter
     private List<JoinNode> joinNodes = new ArrayList<>();
+    @Getter
     private List<Expression> selectFieldNodes = new ArrayList<>();
     @Setter
     private WhereNode whereNode;
@@ -23,8 +28,9 @@ public class SelectNode {
     private List<OrderByNode> orderByNodes;
     private LimitNode limitNode;
 
-    public SelectNode(Class<?> root) {
+    public SelectNode(Class<?> root, String baseTableName) {
         this.root = root;
+        this.baseTableName = baseTableName;
     }
 
     public void addJoinNode(List<JoinNode> jn){
@@ -39,5 +45,9 @@ public class SelectNode {
     public void setOffset(int offset){
         limitNode = limitNode == null ? new LimitNode() : limitNode;
         limitNode.setOffset(offset);
+    }
+
+    public void addSelectClauseColumn(FieldNode expr){
+        selectFieldNodes.add(expr);
     }
 }
