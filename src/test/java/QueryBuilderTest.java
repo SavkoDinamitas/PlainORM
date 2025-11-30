@@ -35,4 +35,23 @@ public class QueryBuilderTest {
                 "INNER JOIN crews AS \"flights.crew\" ON ((\"flights.crew\".crewid) = (\"flights\".crewid))\n" +
                 "INNER JOIN pilots AS \"flights.crew.pilot\" ON ((\"flights.crew.pilot\".pilotid) = (\"flights.crew\".pilotid))\n", check);
     }
+
+    @Test
+    public void testSimpleSelectClauseGeneration(){
+        String check = QueryBuilder.select(Airplane.class).generateSelectClause();
+        assertEquals("SELECT\n\"%root\".id AS \"%root.id\",\n\"%root\".name AS \"%root.name\"\n FROM airplanes AS \"%root\"", check);
+    }
+
+    @Test
+    public void testMultipleJoinSelectClauseGeneration(){
+        String check = QueryBuilder.select(Airplane.class).join("flights").join("flights.crew").generateSelectClause();
+        assertEquals("SELECT\n" +
+                "\"%root\".id AS \"%root.id\",\n" +
+                "\"%root\".name AS \"%root.name\",\n" +
+                "\"flights\".flightnumber AS \"%root.flights.flightnumber\",\n" +
+                "\"flights\".flighttype AS \"%root.flights.flighttype\",\n" +
+                "\"flights.crew\".crewid AS \"%root.flights.crew.crewid\",\n" +
+                "\"flights.crew\".crewnumber AS \"%root.flights.crew.crewnumber\"\n" +
+                " FROM airplanes AS \"%root\"", check);
+    }
 }
