@@ -30,11 +30,12 @@ public class QueryBuilder {
     /**
      * Special constructor for SubQuery builder, do not use for regular query building
      * @param object root table for subquery builder
-     * @param columns columns subquery should return
+     * @param e1 column subquery should return
+     * @param exps other columns subquery should return
      * @return new instance of subquery builder
      */
-    public static SubQueryBuilder select(Class<?> object, List<String> columns){
-        return new SubQueryBuilder(object, columns);
+    public static SubQueryBuilder subQuery(Class<?> object, Expression e1, Expression... exps){
+        return new SubQueryBuilder(object, Stream.concat(Stream.of(e1), Stream.of(exps)).toList());
     }
 
     protected QueryBuilder(SelectNode rootSelectNode){

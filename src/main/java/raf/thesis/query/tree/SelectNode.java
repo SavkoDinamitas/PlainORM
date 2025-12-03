@@ -17,6 +17,7 @@ public class SelectNode {
     @Getter
     private List<JoinNode> joinNodes = new ArrayList<>();
     @Getter
+    @Setter
     private List<Expression> selectFieldNodes = new ArrayList<>();
     @Setter
     private WhereNode whereNode;

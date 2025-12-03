@@ -16,4 +16,16 @@ public interface Dialect {
     String generateOrderByClause(OrderByNode orderByNode);
 
     String generateLimitClause(LimitNode limitNode);
+
+    String generateBinaryOperationExp(BinaryOp operation);
+
+    String generateUnaryOperationExp(UnaryOp operation);
+
+    String generateLiteralExp(Literal literal);
+
+    String generateFunctionExp(FunctionNode functionNode);
+
+    String generateTupleExp(TupleNode tupleNode);
+
+    String generateFieldExp(FieldNode fieldNode);
 }

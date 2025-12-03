@@ -3,7 +3,7 @@ package raf.thesis.query;
 import lombok.NoArgsConstructor;
 import raf.thesis.query.tree.*;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 @SuppressWarnings("ClassEscapesDefinedScope")
 @NoArgsConstructor
@@ -14,7 +14,11 @@ public class ConditionBuilder {
      * @return updated condition builder
      */
     public static FieldNode field(String fieldPath) {
-        return null;
+        String[] path = fieldPath.split("\\.");
+        String fieldName = path[path.length - 1];
+        int index = fieldPath.lastIndexOf(".");
+        String alias = index == -1 ? "%root" : fieldPath.substring(0, index);
+        return new FieldNode(alias, fieldName);
     }
 
     public static Literal lit(String value){
@@ -29,8 +33,8 @@ public class ConditionBuilder {
         return new Literal.DoubleCnst(value);
     }
 
-    public static TupleNode tuple(Expression... expressions){
-        return new TupleNode(List.of(expressions));
+    public static TupleNode tuple(Expression e1, Expression e2, Expression... expressions){
+        return new TupleNode(Stream.concat(Stream.of(e1, e2), Stream.of(expressions)).toList());
     }
 
     public static OrderByNode asc(Expression expression){

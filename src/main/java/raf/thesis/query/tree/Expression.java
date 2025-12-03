@@ -1,10 +1,8 @@
 package raf.thesis.query.tree;
 
-import raf.thesis.query.ConditionBuilder;
-import raf.thesis.query.QueryBuilder;
-import raf.thesis.query.SubQueryBuilder;
+import raf.thesis.query.ToSql;
 
-public interface Expression {
+public interface Expression extends ToSql {
     default Expression gt(Expression expr) {
         return new BinaryOp(this, expr, BinaryOpCode.GT);
     }
