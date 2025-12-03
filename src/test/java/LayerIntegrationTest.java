@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static raf.thesis.query.ConditionBuilder.*;
 
 public class LayerIntegrationTest {
     private static Connection conn;
@@ -96,11 +97,11 @@ public class LayerIntegrationTest {
 
     @Test
     void testManyToManyJoinIntegrationTest() throws SQLException {
-        String query = QueryBuilder.select(Project.class).join("employees").join("employees.projects").build();
-        //add order by clause for consistent checking
-        //TODO: replace with real order by clause after implementing
-        query = query.substring(0, query.length() - 1);
-        query += "\n" + "ORDER BY \"%root\".project_id;";
+        String query = QueryBuilder.select(Project.class)
+                .join("employees")
+                .join("employees.projects")
+                .orderBy(asc(field("project_id")))
+                .build();
         System.out.println(query);
         try (Statement stmt = conn.createStatement();
              java.sql.ResultSet rs = stmt.executeQuery(query)) {
