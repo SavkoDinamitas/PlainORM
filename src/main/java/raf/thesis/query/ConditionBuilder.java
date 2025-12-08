@@ -3,6 +3,9 @@ package raf.thesis.query;
 import lombok.NoArgsConstructor;
 import raf.thesis.query.tree.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.stream.Stream;
 
 @SuppressWarnings("ClassEscapesDefinedScope")
@@ -31,6 +34,18 @@ public class ConditionBuilder {
 
     public static Literal lit(double value){
         return new Literal.DoubleCnst(value);
+    }
+
+    public static Literal lit(LocalDate date){
+        return new Literal.DateCnst(date);
+    }
+
+    public static Literal lit(LocalTime time){
+        return new Literal.TimeCnst(time);
+    }
+
+    public static Literal lit(LocalDateTime timestamp){
+        return new Literal.DateTimeCnst(timestamp);
     }
 
     public static TupleNode tuple(Expression e1, Expression e2, Expression... expressions){

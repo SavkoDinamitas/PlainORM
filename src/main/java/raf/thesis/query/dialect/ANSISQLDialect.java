@@ -125,6 +125,9 @@ public class ANSISQLDialect implements Dialect {
             case Literal.DoubleCnst d -> String.valueOf(d.x());
             case Literal.LongCnst l -> String.valueOf(l.x());
             case Literal.StringCnst s -> "'" + s.x() + "'";
+            case Literal.DateCnst d -> "DATE '%s-%s-%s'".formatted(d.x().getYear(), d.x().getMonthValue(), d.x().getDayOfMonth());
+            case Literal.DateTimeCnst d -> "TIMESTAMP '%s-%s-%s %s:%s:%s'".formatted(d.x().getYear(), d.x().getMonthValue(), d.x().getDayOfMonth(), d.x().getHour(), d.x().getMinute(), d.x().getSecond());
+            case Literal.TimeCnst d -> "TIME '%s:%s:%s'".formatted(d.x().getHour(), d.x().getMinute(), d.x().getSecond());
         };
     }
 
