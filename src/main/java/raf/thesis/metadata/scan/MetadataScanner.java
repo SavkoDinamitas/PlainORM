@@ -64,7 +64,41 @@ public class MetadataScanner {
         for (var relation : solveForeignKeys)
             solveRelationWithoutFK(relation);
 
+        //find all PDO classes for special queries
+        Set<Class<?>> pdos = reflections.getTypesAnnotatedWith(PDO.class);
+        for (Class<?> pdo : pdos) {
+            //process annotations inside class
+            processPDO(pdo);
+        }
         initialized = true;
+    }
+
+    private void processPDO(Class<?> clazz) {
+        EntityMetadata metadata = new EntityMetadata();
+        metadata.setEntityClass(clazz);
+        //for each field in class insert its metadata in entity metadata
+        for(Field field : clazz.getDeclaredFields()) {
+            processPDOsFields(field, metadata);
+        }
+        MetadataStorage.register(metadata);
+    }
+
+    private void processPDOsFields(Field field, EntityMetadata meta) {
+        if (field.isAnnotationPresent(Column.class)) {
+            Column columnAnn = field.getAnnotation(Column.class);
+            ColumnMetadata columnMeta = new ColumnMetadata();
+
+            assert columnAnn != null;
+            columnMeta.setColumnName(!columnAnn.columnName().isEmpty() ? columnAnn.columnName().toLowerCase() : field.getName().toLowerCase());
+            columnMeta.setField(field);
+            meta.getColumns().put(columnMeta.getColumnName(), columnMeta);
+        }
+        else{
+            ColumnMetadata columnMeta = new ColumnMetadata();
+            columnMeta.setColumnName(field.getName());
+            columnMeta.setField(field);
+            meta.getColumns().put(columnMeta.getColumnName(), columnMeta);
+        }
     }
 
     private void processEntity(Class<?> clazz) {

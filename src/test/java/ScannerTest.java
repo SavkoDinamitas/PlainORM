@@ -5,6 +5,7 @@ import discovery.test2.Flight;
 import discovery.test2.Pilot;
 import discovery.test8.Club;
 import discovery.test8.Player;
+import discovery.test9.PDOTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,16 @@ public class ScannerTest {
         Map<Class<?>, EntityMetadata> expected = new HashMap<>();
         expected.put(Club.class, Club.getMetadata());
         expected.put(Player.class, Player.getMetadata());
+        assertThat(MetadataStorage.getAllData()).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void testPDOsMetadataScan() throws NoSuchFieldException {
+        MetadataScanner ms = new MetadataScanner();
+        ms.discoverMetadata("discovery.test9");
+        assertFalse(MetadataStorage.getAllData().isEmpty());
+        Map<Class<?>, EntityMetadata> expected = new HashMap<>();
+        expected.put(PDOTest.class, PDOTest.getMetadata());
         assertThat(MetadataStorage.getAllData()).usingRecursiveComparison().isEqualTo(expected);
     }
 
