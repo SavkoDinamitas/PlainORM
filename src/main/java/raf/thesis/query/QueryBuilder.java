@@ -17,6 +17,7 @@ public class QueryBuilder {
     protected final SelectNode rootSelectNode;
     private final Set<String> joinTables = new HashSet<>();
     protected final Dialect dialect = new ANSISQLDialect();
+    private boolean pdoQuery = false;
     /**
      * Set root object of query builder to specify type that is returned
      * @param object .class of entity a query should return
@@ -25,6 +26,18 @@ public class QueryBuilder {
     public static QueryBuilder select(Class<?> object){
         SelectNode sn = new SelectNode(object, MetadataStorage.get(object).getTableName());
         return new QueryBuilder(sn);
+    }
+
+    /**
+     * Use this constructor only for returning Plain Data Objects, it doesn't support entities mapping
+     * @param object .class of object which table will be used in FROM clause
+     * @param a1 a column that query should return but with given custom alias (should be same name as PTO object field)
+     * @param columns other columns query should return
+     * @return new query builder instance with set root table and returning columns
+     */
+    public static QueryBuilder select(Class<?> object, AliasedColumn a1, AliasedColumn... columns){
+        SelectNode sn = new SelectNode(object, MetadataStorage.get(object).getTableName());
+        return new QueryBuilder(sn, Stream.concat(Stream.of(a1), Stream.of(columns)).toList());
     }
 
     /**
@@ -42,6 +55,13 @@ public class QueryBuilder {
         this.rootSelectNode = rootSelectNode;
         handleRootColumns(rootSelectNode.getRoot());
     }
+
+    private QueryBuilder(SelectNode rootSelectNode, List<AliasedColumn> columns){
+        List<Expression> cols = new ArrayList<>(columns);
+        rootSelectNode.setSelectFieldNodes(cols);
+        this.rootSelectNode = rootSelectNode;
+        this.pdoQuery = true;
+    }
     /**
      * Add distinct keyword in query
      * @return updated query builder
@@ -58,7 +78,8 @@ public class QueryBuilder {
      */
     public QueryBuilder join(String relationPath){
         rootSelectNode.addJoinNode(generateJoinNode(rootSelectNode.getRoot(), relationPath, INNER));
-        handleJoinedTableColumns(relationPath);
+        if(!pdoQuery)
+            handleJoinedTableColumns(relationPath);
         return this;
     }
 
@@ -70,7 +91,8 @@ public class QueryBuilder {
      */
     public QueryBuilder join(String relationPath, Join join){
         rootSelectNode.addJoinNode(generateJoinNode(rootSelectNode.getRoot(), relationPath, join));
-        handleJoinedTableColumns(relationPath);
+        if(!pdoQuery)
+            handleJoinedTableColumns(relationPath);
         return this;
     }
 
@@ -85,7 +107,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Specify having clause for query
+     * Specify having clause for query, use only for queries that map to PDO-s
      * @param expression expression inside having clause
      * @return updated query builder
      */
@@ -95,7 +117,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Specify groupBy clause for query
+     * Specify groupBy clause for query, use only for queries that map to PDO-s
      * @param e1 first expression
      * @param expressions other expressions
      * @return updated query builder

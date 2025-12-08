@@ -1,3 +1,4 @@
+import layering.DepartmentsWithMaxEmployeeIdPDO;
 import layering.Employee;
 import layering.Department;
 import layering.Project;
@@ -13,6 +14,7 @@ import util.HrScheme;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -299,6 +301,28 @@ public class LayerIntegrationTest {
             Department Marketing = new Department(20, "Marketing");
             Department Purchasing = new Department(30, "Purchasing");
             assertThat(departments).usingRecursiveComparison().isEqualTo(List.of(Marketing, Purchasing));
+        }
+    }
+
+    @Test
+    void testPTOIntegration() throws SQLException{
+        String query = QueryBuilder.select(
+                    Department.class,
+                    aliasedColumn(field("department_id"), "department_id"),
+                    aliasedColumn(max(field("employees.employee_id")), "maxEmployeeId"))
+                .join("employees")
+                .groupBy(field("department_id"))
+                .having(max(field("employees.employee_id").gt(lit(102))))
+                .orderBy(desc(field("department_id")))
+                .build();
+        try (Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(query)) {
+
+            List<DepartmentsWithMaxEmployeeIdPDO> d = rowMapper.mapList(rs, DepartmentsWithMaxEmployeeIdPDO.class);
+            List<DepartmentsWithMaxEmployeeIdPDO> expected = new ArrayList<>();
+            expected.add(new DepartmentsWithMaxEmployeeIdPDO(30, 103));
+            expected.add(new DepartmentsWithMaxEmployeeIdPDO(20, 104));
+            assertThat(d).usingRecursiveComparison().isEqualTo(expected);
         }
     }
 }

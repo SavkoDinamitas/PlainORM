@@ -24,6 +24,10 @@ public class ConditionBuilder {
         return new FieldNode(fieldName, alias);
     }
 
+    public static AliasedColumn aliasedColumn(Expression expression, String alias){
+        return new AliasedColumn(expression, alias);
+    }
+
     public static Literal lit(String value){
         return new Literal.StringCnst(value);
     }

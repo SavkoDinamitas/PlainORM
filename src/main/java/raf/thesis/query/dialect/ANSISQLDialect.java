@@ -167,6 +167,11 @@ public class ANSISQLDialect implements Dialect {
         return "%s.%s".formatted(quote(fieldNode.getTableAlias()), fieldNode.getFieldName());
     }
 
+    @Override
+    public String generateAliasedFieldExp(AliasedColumn column){
+        return "%s AS %s".formatted(column.getExpression().toSql(this), column.getColAlias());
+    }
+
     private String generateFieldExpWithAlias(FieldNode fieldNode, String baseAlias) {
         return "%s AS %s".formatted(generateFieldExp(fieldNode),
                 quote("%s%s.%s".formatted(handleRootField(fieldNode.getTableAlias(), baseAlias), fieldNode.getTableAlias(), fieldNode.getFieldName())));

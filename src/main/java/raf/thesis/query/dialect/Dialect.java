@@ -30,4 +30,6 @@ public interface Dialect {
     String generateTupleExp(TupleNode tupleNode);
 
     String generateFieldExp(FieldNode fieldNode);
+
+    String generateAliasedFieldExp(AliasedColumn column);
 }
