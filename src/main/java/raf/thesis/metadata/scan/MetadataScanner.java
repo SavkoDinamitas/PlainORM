@@ -137,6 +137,9 @@ public class MetadataScanner {
         boolean columnMade = false;
         if (field.isAnnotationPresent(Id.class)) {
             meta.getIdFields().add(field);
+            Id annotation = field.getAnnotation(Id.class);
+            assert annotation != null;
+            meta.getGeneratedId().add(annotation.generated());
         }
         if (field.isAnnotationPresent(Column.class)) {
             Column columnAnn = field.getAnnotation(Column.class);

@@ -42,7 +42,7 @@ public class ScannerTest {
         map.put("userid", new ColumnMetadata("userid", User.class.getDeclaredField("user_id")));
         map.put("name", new ColumnMetadata("name", User.class.getDeclaredField("name")));
         map.put("username", new ColumnMetadata("username", User.class.getDeclaredField("username")));
-        EntityMetadata meta = new EntityMetadata("users", User.class, List.of(User.class.getDeclaredField("user_id")), map, new ArrayList<>());
+        EntityMetadata meta = new EntityMetadata("users", User.class, List.of(User.class.getDeclaredField("user_id")), map, new ArrayList<>(), List.of(false));
         Map<Class<?>, EntityMetadata> expected = Map.of(User.class, meta);
         assertThat(MetadataStorage.getAllData()).usingRecursiveComparison().isEqualTo(expected);
     }

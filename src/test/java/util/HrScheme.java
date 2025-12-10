@@ -287,7 +287,7 @@ public class HrScheme {
                         Department.class.getDeclaredField("employees"),
                         "employees",
                         RelationType.ONE_TO_MANY,
-                        Employee.class))));
+                        Employee.class)), List.of(false)));
         //Employees
         Map<String, ColumnMetadata> emap = new HashMap<>();
         emap.put("employee_id", new ColumnMetadata("employee_id", Employee.class.getDeclaredField("employee_id")));
@@ -318,7 +318,7 @@ public class HrScheme {
                                         Project.class,
                                         "employees"
                                 )
-                        )
+                        ), List.of(false)
                 )
         );
         //Projects
@@ -336,6 +336,6 @@ public class HrScheme {
                         "employees",
                         RelationType.MANY_TO_MANY,
                         Employee.class,
-                        "projects"))));
+                        "projects")), List.of(false)));
     }
 }

@@ -16,4 +16,5 @@ public class EntityMetadata {
     //TODO: make these keys lowercase always!!
     private Map<String, ColumnMetadata> columns = new LinkedHashMap<>();
     private List<RelationMetadata> relations = new ArrayList<>();
+    private List<Boolean> generatedId = new ArrayList<>();
 }

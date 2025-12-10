@@ -28,6 +28,6 @@ public class Pilot {
         Map<String, ColumnMetadata> cols = new HashMap<>();
         cols.put("pilotid", new ColumnMetadata("pilotid", Pilot.class.getDeclaredField("pilotId")));
         cols.put("pilotname", new ColumnMetadata("pilotname", Pilot.class.getDeclaredField("pilotName")));
-        return new EntityMetadata("pilots", Pilot.class, List.of(Pilot.class.getDeclaredField("pilotId")), cols, new ArrayList<>());
+        return new EntityMetadata("pilots", Pilot.class, List.of(Pilot.class.getDeclaredField("pilotId")), cols, new ArrayList<>(), List.of(false));
     }
 }

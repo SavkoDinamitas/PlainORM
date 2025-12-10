@@ -20,6 +20,6 @@ public class PDOTest {
         Map<String, ColumnMetadata> columns = new HashMap<>();
         columns.put("department_id", new ColumnMetadata("department_id", PDOTest.class.getDeclaredField("departmentId")));
         columns.put("maxsalary", new ColumnMetadata("maxsalary", PDOTest.class.getDeclaredField("maxSalary")));
-        return new EntityMetadata(null, PDOTest.class, new ArrayList<>(), columns, new ArrayList<>());
+        return new EntityMetadata(null, PDOTest.class, new ArrayList<>(), columns, new ArrayList<>(), new ArrayList<>());
     }
 }

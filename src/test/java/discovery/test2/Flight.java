@@ -39,6 +39,6 @@ public class Flight {
         List<RelationMetadata> rel = new ArrayList<>();
         rel.add(new RelationMetadata(Flight.class.getDeclaredField("crew"), "crew", RelationType.MANY_TO_ONE, Crew.class, List.of("crewid"), null, null, null));
         rel.add(new RelationMetadata(Flight.class.getDeclaredField("airplanes"), "airplanes", RelationType.MANY_TO_MANY, Airplane.class, List.of("id"), "airplanes_flights", List.of("flightnumber"), null));
-        return new EntityMetadata("flights", Flight.class, List.of(Flight.class.getDeclaredField("flightNumber")), cols, rel);
+        return new EntityMetadata("flights", Flight.class, List.of(Flight.class.getDeclaredField("flightNumber")), cols, rel, List.of(false));
     }
 }

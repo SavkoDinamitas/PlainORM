@@ -23,6 +23,6 @@ public class Player {
         cols.put("number", new ColumnMetadata("number", Player.class.getDeclaredField("number")));
         cols.put("clas", new ColumnMetadata("clas", Player.class.getDeclaredField("clas")));
         cols.put("name", new ColumnMetadata("name", Player.class.getDeclaredField("name")));
-        return new EntityMetadata("players", Player.class, List.of(Player.class.getDeclaredField("number"), Player.class.getDeclaredField("clas")), cols, new ArrayList<>());
+        return new EntityMetadata("players", Player.class, List.of(Player.class.getDeclaredField("number"), Player.class.getDeclaredField("clas")), cols, new ArrayList<>(), List.of(false, false));
     }
 }

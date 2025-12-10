@@ -27,6 +27,6 @@ public class Club {
         cols.put("name", new ColumnMetadata("name", Club.class.getDeclaredField("name")));
         List<RelationMetadata> rels = new ArrayList<>();
         rels.add(new RelationMetadata(Club.class.getDeclaredField("players"), "players", RelationType.ONE_TO_MANY, Player.class, List.of("id"), null, null, null));
-        return new EntityMetadata("clubs", Club.class, List.of(Club.class.getDeclaredField("id")), cols, rels);
+        return new EntityMetadata("clubs", Club.class, List.of(Club.class.getDeclaredField("id")), cols, rels, List.of(false));
     }
 }
