@@ -3,15 +3,19 @@ package raf.thesis;
 import lombok.NonNull;
 import raf.thesis.mapper.DefaultMapperImplementation;
 import raf.thesis.mapper.RowMapper;
+import raf.thesis.metadata.EntityMetadata;
 import raf.thesis.metadata.scan.MetadataScanner;
+import raf.thesis.metadata.storage.MetadataStorage;
 import raf.thesis.query.InsertSolver;
 import raf.thesis.query.PreparedStatementQuery;
 import raf.thesis.query.QueryBuilder;
 import raf.thesis.query.dialect.ANSISQLDialect;
 import raf.thesis.query.dialect.Dialect;
+import raf.thesis.query.exceptions.EntityObjectRequiredForInsertionException;
 import raf.thesis.query.tree.Literal;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,8 +87,20 @@ public class Session {
     }
 
     public void insert(Object obj) throws SQLException {
-        List<PreparedStatementQuery> queries = insertSolver.generateInsert(obj);
         Connection conn = connectionSupplier.getConnection();
+
+        PreparedStatementQuery mainInsert = insertSolver.generateInsert(obj);
+        PreparedStatement preparedStatement = conn.prepareStatement(mainInsert.getQuery(), extractKeys(obj));
+        for(int i = 1; i <= mainInsert.getArguments().size(); i++){
+            bindLiteral(preparedStatement, i, mainInsert.getArguments().get(i - 1));
+        }
+        preparedStatement.executeUpdate();
+        ResultSet rs = preparedStatement.getGeneratedKeys();
+        Object keysObject = rowMapper.map(rs, obj.getClass());
+
+        //solve many-to-many relationships
+        List<PreparedStatementQuery> queries = insertSolver.generateManyToManyInserts(obj, keysObject);
+
         //go in reverse as last element in list is the main insert, others are many to many inserts
         for(int k = queries.size() - 1; k >= 0; k--) {
             PreparedStatementQuery pq = queries.get(k);
@@ -95,6 +111,21 @@ public class Session {
             ps.executeUpdate();
         }
         conn.close();
+    }
+
+    private String[] extractKeys(Object obj){
+        EntityMetadata metadata = MetadataStorage.get(obj.getClass());
+        if(metadata == null)
+            throw new EntityObjectRequiredForInsertionException("Given object: " + obj.getClass().getName() + " is not an entity");
+
+        String[] keys = new String[metadata.getIdFields().size()];
+        int i = 0;
+        for(var column : metadata.getColumns().values()){
+            if(metadata.getIdFields().contains(column.getField())){
+                keys[i++] = column.getColumnName();
+            }
+        }
+        return keys;
     }
 
     private void bindLiteral(PreparedStatement ps, int idx, Literal lit) throws SQLException {
