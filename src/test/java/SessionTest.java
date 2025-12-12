@@ -181,4 +181,39 @@ public class SessionTest {
         List<Department> departments = session.executeSelect(qb, Department.class);
         assertTrue(departments.isEmpty());
     }
+
+    //tests for connect
+    @Test
+    void testManyToManyConnect() throws SQLException {
+        Employee Bruce = new Employee(104, "Bruce", "Ernst", LocalDate.of(2007, 5, 21));
+        Project Hr = new Project(1, "HR Onboarding System");
+        Project Payrol = new Project(2, "Internal Payroll Platform");
+        Project Mobile = new Project(4, "Mobile Sales Dashboard");
+        Bruce.setProjects(List.of(Hr, Payrol, Mobile));
+        session.connectRows(Bruce, Hr, "projects");
+        QueryBuilder qb = QueryBuilder.select(Employee.class)
+                .join("projects")
+                .where(field("employee_id").eq(lit(104)))
+                .orderBy(asc(field("projects.project_id")));
+        Employee expected = session.executeSelect(qb, Employee.class).getFirst();
+        assertThat(expected).usingRecursiveComparison().isEqualTo(Bruce);
+    }
+
+    @Test
+    void testOtherRelationsConnect() throws SQLException {
+        Employee me = new Employee(105, "Salko", "Dinamitas", LocalDate.of(2002, 10, 10));
+        session.insert(me);
+        Employee Steven = new Employee(100, "Steven", "King", LocalDate.of(2003, 6, 17));
+        Department Marketing = new Department(20, "Marketing");
+        session.connectRows(me, Steven, "manager");
+        session.connectRows(Marketing, me, "employees");
+        me.setDepartment(Marketing);
+        me.setManager(Steven);
+        QueryBuilder qb = QueryBuilder.select(Employee.class)
+                .join("department")
+                .join("manager")
+                .where(field("employee_id").eq(lit(105)));
+        Employee expected = session.executeSelect(qb, Employee.class).getFirst();
+        assertThat(expected).usingRecursiveComparison().isEqualTo(me);
+    }
 }
