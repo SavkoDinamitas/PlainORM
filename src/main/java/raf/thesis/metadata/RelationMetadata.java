@@ -24,6 +24,8 @@ public class RelationMetadata {
     List<String> myJoinedTableFks;
     //potential eager n:m loading
     String foreignRelationName;
+    //only for ONE-TO-ONE relations -> is the fk in my table?
+    Boolean mySideKey;
 
     public RelationMetadata(Field foreignField, String relationName, RelationType relationType, Class<?> foreignClass) {
         this.foreignField = foreignField;
@@ -37,6 +39,17 @@ public class RelationMetadata {
         this.relationName = relationName;
         this.relationType = relationType;
         this.foreignClass = foreignClass;
+        this.foreignRelationName = foreignRelationName;
+    }
+
+    public RelationMetadata(Field foreignField, String relationName, RelationType relationType, Class<?> foreignClass, List<String> foreignKeyNames, String joinedTableName, List<String> myJoinedTableFks, String foreignRelationName) {
+        this.foreignField = foreignField;
+        this.relationName = relationName;
+        this.relationType = relationType;
+        this.foreignClass = foreignClass;
+        this.foreignKeyNames = foreignKeyNames;
+        this.joinedTableName = joinedTableName;
+        this.myJoinedTableFks = myJoinedTableFks;
         this.foreignRelationName = foreignRelationName;
     }
 }

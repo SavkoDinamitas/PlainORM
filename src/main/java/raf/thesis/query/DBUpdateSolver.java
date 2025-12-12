@@ -55,7 +55,7 @@ public class DBUpdateSolver {
             if (relatedObject == null)
                 continue;
 
-            if (relation.getRelationType() == RelationType.MANY_TO_ONE || relation.getRelationType() == RelationType.ONE_TO_ONE) {
+            if (relation.getRelationType() == RelationType.MANY_TO_ONE || (relation.getRelationType() == RelationType.ONE_TO_ONE && relation.getMySideKey())) {
                 columnNames.addAll(relation.getForeignKeyNames());
                 EntityMetadata relationEntity = MetadataStorage.get(relatedObject.getClass());
                 getKeyValues(relationEntity, relatedObject, columnValues);
@@ -155,8 +155,8 @@ public class DBUpdateSolver {
             throw new InvalidRelationPathException("Given relation name doesn't exist in object: " + obj1);
         RelationMetadata rel = relationOp.get();
 
-        //case MANY-TO-ONE and ONE-TO-ONE -> update foreign key in obj1 table
-        if (rel.getRelationType() == RelationType.MANY_TO_ONE || rel.getRelationType() == RelationType.ONE_TO_ONE) {
+        //case MANY-TO-ONE and ONE-TO-ONE with containsFK = true -> update foreign key in obj1 table
+        if (rel.getRelationType() == RelationType.MANY_TO_ONE || (rel.getRelationType() == RelationType.ONE_TO_ONE && rel.getMySideKey())) {
             //joined values, first ones in SET clause than ones in WHERE clause
             List<Literal> columnValues = new ArrayList<>();
             //columns to put in SET clause of UPDATE query
@@ -167,8 +167,8 @@ public class DBUpdateSolver {
             getKeyValues(meta1, obj1, columnValues);
             return new PreparedStatementQuery(dialect.generateUpdateQuery(columnNames, meta1.getTableName(), columnKeyNames), columnValues);
         }
-        //case ONE-TO-MANY -> update foreign key in obj2 table
-        if (rel.getRelationType() == RelationType.ONE_TO_MANY) {
+        //case ONE-TO-MANY or ONE-TO-ONE with containsFK = false -> update foreign key in obj2 table
+        if (rel.getRelationType() == RelationType.ONE_TO_MANY || rel.getRelationType() == RelationType.ONE_TO_ONE) {
             //joined values, first ones in SET clause than ones in WHERE clause
             List<Literal> columnValues = new ArrayList<>();
             //columns to put in SET clause of UPDATE query
@@ -198,8 +198,8 @@ public class DBUpdateSolver {
             throw new InvalidRelationPathException("Given relation name doesn't exist in object: " + obj1);
         RelationMetadata rel = relationOp.get();
 
-        //case MANY-TO-ONE and ONE-TO-ONE -> update foreign key in obj1 table
-        if (rel.getRelationType() == RelationType.MANY_TO_ONE || rel.getRelationType() == RelationType.ONE_TO_ONE) {
+        //case MANY-TO-ONE and ONE-TO-ONE with containsFK = true -> remove foreign key in obj1 table
+        if (rel.getRelationType() == RelationType.MANY_TO_ONE || (rel.getRelationType() == RelationType.ONE_TO_ONE && rel.getMySideKey())) {
             //joined values, first ones in SET clause than ones in WHERE clause
             List<Literal> columnValues = new ArrayList<>();
             //columns to put in SET clause of UPDATE query
@@ -213,8 +213,8 @@ public class DBUpdateSolver {
             getKeyValues(meta1, obj1, columnValues);
             return new PreparedStatementQuery(dialect.generateUpdateQuery(columnNames, meta1.getTableName(), columnKeyNames), columnValues);
         }
-        //case ONE-TO-MANY -> update foreign key in obj2 table
-        if (rel.getRelationType() == RelationType.ONE_TO_MANY) {
+        //case ONE-TO-MANY or ONT_TO_ONE with containsFK = false -> update foreign key in obj2 table
+        if (rel.getRelationType() == RelationType.ONE_TO_MANY || rel.getRelationType() == RelationType.ONE_TO_ONE) {
             if (obj2 == null) {
                 throw new NullPointerException("Both objects in ONE_TO_MANY relation must be given!");
             }

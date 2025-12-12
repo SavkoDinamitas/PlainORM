@@ -146,13 +146,13 @@ public class Session {
         executeUpdateStatement(connect);
     }
 
-    //only for MANY-TO-ONE and ONE-TO-ONE relations
+    //only for MANY-TO-ONE and ONE-TO-ONE with containsFK = true relations
     public void disconnectRow(Object obj1, String relationName) throws SQLException {
         PreparedStatementQuery disconnect = DBUpdateSolver.disconnect(obj1, null, relationName);
         executeUpdateStatement(disconnect);
     }
 
-    //only for MANY-TO-MANY and ONE-TO-MANY relations
+    //only for MANY-TO-MANY, ONE-TO-MANY and ONE-TO-ONE with containsFK = false relations
     public void disconnectRows(Object obj1, Object obj2, String relationName) throws SQLException {
         PreparedStatementQuery disconnect = DBUpdateSolver.disconnect(obj1, obj2, relationName);
         executeUpdateStatement(disconnect);

@@ -10,4 +10,6 @@ import java.lang.annotation.Target;
 public @interface OneToOne {
     String relationName() default "";
     String[] foreignKey() default {};
+    //is the foreign key in my table?
+    boolean containsFk();
 }

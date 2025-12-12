@@ -206,13 +206,13 @@ public class QueryBuilder {
             Class<?> joiningClass = findInstanceType(joiningRelationPath, root);
             EntityMetadata joiningMetadata = MetadataStorage.get(joiningClass);
             String tableName = joiningMetadata.getTableName();
-            //two cases: @MANY_TO_ONE and others
+            //two cases: @MANY_TO_ONE and @ONE_TO_ONE with containsKey = true and others
             //@MANY_TO_ONE -> old table has the foreign key and new one uses its pk for join
             //others -> joining table has the fk that joins on old table pk
             List<String> joiningTablePk;
             List<String> foreignTableKeys;
             var relation = relationMetadata.get();
-            if(relation.getRelationType() == RelationType.MANY_TO_ONE){
+            if(relation.getRelationType() == RelationType.MANY_TO_ONE || (relation.getRelationType() == RelationType.ONE_TO_ONE && relation.getMySideKey())){
                 foreignTableKeys = relation.getForeignKeyNames();
                 joiningTablePk = extractKeys(joiningMetadata);
             }

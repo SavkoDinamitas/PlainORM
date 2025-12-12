@@ -156,6 +156,7 @@ public class MetadataScanner {
             RelationMetadata relationMetadata = new RelationMetadata();
 
             assert oneAnn != null;
+            relationMetadata.setMySideKey(oneAnn.containsFk());
             relationMetadata.setRelationName(!oneAnn.relationName().isEmpty() ? oneAnn.relationName().toLowerCase() : field.getName().toLowerCase());
             relationMetadata.setRelationType(RelationType.ONE_TO_ONE);
             relationMetadata.setForeignField(field);
@@ -280,7 +281,8 @@ public class MetadataScanner {
         EntityMetadata foreignEntity = MetadataStorage.get(relationMetadata.getForeignClass());
         if (relationMetadata.getForeignKeyNames() == null) {
             List<String> names = new ArrayList<>();
-            if(relationMetadata.getRelationType() == RelationType.MANY_TO_ONE || relationMetadata.getRelationType() == RelationType.MANY_TO_MANY) {
+            if(relationMetadata.getRelationType() == RelationType.MANY_TO_ONE || relationMetadata.getRelationType() == RelationType.MANY_TO_MANY
+            || (relationMetadata.getRelationType() == RelationType.ONE_TO_ONE && relationMetadata.getMySideKey())) {
                 names.addAll(extractPKNames(foreignEntity));
             }
             else{
