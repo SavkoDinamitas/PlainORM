@@ -40,11 +40,21 @@ public class Session {
         DBUpdateSolver = new DBUpdateSolver(dialect);
     }
 
+    public Session(ConnectionSupplier connectionSupplier, Dialect dialect, String... scanPackages) {
+        this.connectionSupplier = connectionSupplier;
+        metadataScanner.discoverMetadata(scanPackages);
+        //detect which Dialect to use based on connection db
+        this.dialect = dialect;
+        DBUpdateSolver = new DBUpdateSolver(dialect);
+    }
+
     //detect database from connection
     private Dialect getDialect(){
         try(Connection conn = connectionSupplier.getConnection()){
-            String url = conn.getMetaData().getURL();
-            if(url.contains("mariadb"))
+            String driverName = conn.getMetaData().getDriverName();
+            if(driverName.toLowerCase().contains("mariadb"))
+                return new MariaDBDialect();
+            if(driverName.toLowerCase().contains("mysql"))
                 return new MariaDBDialect();
             else
                 return new ANSISQLDialect();
@@ -118,24 +128,15 @@ public class Session {
     public <T> T insert(T obj) throws SQLException {
         return runBody((conn -> {
             PreparedStatementQuery mainInsert = DBUpdateSolver.generateInsert(obj);
-            PreparedStatement preparedStatement;
-            //in case of MariaDB, use returnig to map generated keys
-            if(dialect instanceof MariaDBDialect mdb)
-                preparedStatement = conn.prepareStatement(mainInsert.getQuery().replace(";", mdb.generateReturningClause(extractKeys(obj))));
-            //in all other cases, use generatedKeys() as they return normal column labels
-            else
-                preparedStatement = conn.prepareStatement(mainInsert.getQuery(), extractKeys(obj));
-            for (int i = 1; i <= mainInsert.getArguments().size(); i++) {
-                bindLiteral(preparedStatement, i, mainInsert.getArguments().get(i - 1));
-            }
             ResultSet rs;
-            if(dialect instanceof MariaDBDialect){
-                rs = preparedStatement.executeQuery();
-            }
-            else{
-                preparedStatement.executeUpdate();
-                rs = preparedStatement.getGeneratedKeys();
-            }
+
+            //databases that doesn't support generatedKeys() with given column labels
+            if(dialect instanceof Dialect.UsesInsertReturning)
+                rs = insertReturning(conn, mainInsert);
+            //normal ones
+            else
+                rs = insertAndGetKeys(conn, mainInsert, obj);
+
             rs.next();
             T keysObject = rowMapper.map(rs, obj);
 
@@ -153,6 +154,23 @@ public class Session {
             }
             return keysObject;
         }));
+    }
+
+    private ResultSet insertAndGetKeys(Connection conn, PreparedStatementQuery mainInsert, Object obj) throws SQLException{
+        PreparedStatement preparedStatement = conn.prepareStatement(mainInsert.getQuery(), extractKeys(obj));
+        for (int i = 1; i <= mainInsert.getArguments().size(); i++) {
+            bindLiteral(preparedStatement, i, mainInsert.getArguments().get(i - 1));
+        }
+        preparedStatement.executeUpdate();
+        return preparedStatement.getGeneratedKeys();
+    }
+
+    private ResultSet insertReturning(Connection conn, PreparedStatementQuery mainInsert) throws SQLException{
+        PreparedStatement preparedStatement = conn.prepareStatement(mainInsert.getQuery());
+        for (int i = 1; i <= mainInsert.getArguments().size(); i++) {
+            bindLiteral(preparedStatement, i, mainInsert.getArguments().get(i - 1));
+        }
+        return preparedStatement.executeQuery();
     }
 
     public void update(Object obj) throws SQLException {

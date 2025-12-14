@@ -33,9 +33,13 @@ public interface Dialect {
 
     String generateAliasedFieldExp(AliasedColumn column);
 
-    String generateInsertClause(List<String> columns, String tableName);
+    String generateInsertQuery(List<String> columns, String tableName);
 
     String generateUpdateQuery(List<String> columns, String tableName, List<String> keyColumnNames);
 
     String generateDeleteQuery(List<String> keyColumnNames, String tableName);
+
+    public interface UsesInsertReturning extends Dialect{
+        String generateInsertQuery(List<String> columns, String tableName, List<String> returningKeys);
+    }
 }

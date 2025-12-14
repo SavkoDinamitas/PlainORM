@@ -61,8 +61,8 @@ public class DBUpdateSolver {
                 getKeyValues(relationEntity, relatedObject, columnValues);
             }
         }
-
-        return new PreparedStatementQuery(dialect.generateInsertClause(columnNames, meta.getTableName()), columnValues);
+        String query = dialect instanceof Dialect.UsesInsertReturning d ? d.generateInsertQuery(columnNames, meta.getTableName(), extractKeys(meta)) : dialect.generateInsertQuery(columnNames, meta.getTableName());
+        return new PreparedStatementQuery(query, columnValues);
     }
 
     public List<PreparedStatementQuery> generateManyToManyInserts(Object obj) {
@@ -91,7 +91,7 @@ public class DBUpdateSolver {
                     EntityMetadata relationEntity = MetadataStorage.get(instance.getClass());
                     getKeyValues(relationEntity, instance, colValues);
 
-                    queries.add(new PreparedStatementQuery(dialect.generateInsertClause(cols, relation.getJoinedTableName()), colValues));
+                    queries.add(new PreparedStatementQuery(dialect.generateInsertQuery(cols, relation.getJoinedTableName()), colValues));
                 }
             }
         }
@@ -185,7 +185,7 @@ public class DBUpdateSolver {
         List<Literal> columnValues = new ArrayList<>();
         getKeyValues(meta1, obj1, columnValues);
         getKeyValues(meta2, obj2, columnValues);
-        return new PreparedStatementQuery(dialect.generateInsertClause(columnNames, rel.getJoinedTableName()), columnValues);
+        return new PreparedStatementQuery(dialect.generateInsertQuery(columnNames, rel.getJoinedTableName()), columnValues);
     }
 
     public PreparedStatementQuery disconnect(Object obj1, Object obj2, String relationName) {

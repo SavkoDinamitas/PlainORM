@@ -175,7 +175,7 @@ public class ANSISQLDialect implements Dialect {
     }
 
     @Override
-    public String generateInsertClause(List<String> columns, String tableName) {
+    public String generateInsertQuery(List<String> columns, String tableName) {
         return "INSERT INTO %s (%s) VALUES (%s);".formatted(tableName, generateInsertColumnParenthesis(columns), generateQuestionMarks(columns.size()));
     }
 
@@ -191,7 +191,7 @@ public class ANSISQLDialect implements Dialect {
         return "DELETE FROM %s\nWHERE %s;".formatted(tableName, generateUpdateWhereClause(keyColumnNames));
     }
 
-    private String generateSetClause(List<String> columns){
+    protected String generateSetClause(List<String> columns){
         StringBuilder result = new StringBuilder();
         for(String column : columns){
             result.append(column);
@@ -203,7 +203,7 @@ public class ANSISQLDialect implements Dialect {
         return result.toString();
     }
 
-    private String generateUpdateWhereClause(List<String> keys){
+    protected String generateUpdateWhereClause(List<String> keys){
         StringBuilder result = new StringBuilder();
         for(int i = 0; i < keys.size(); i++){
             result.append(keys.get(i));
@@ -214,7 +214,7 @@ public class ANSISQLDialect implements Dialect {
         return result.toString();
     }
 
-    private String generateInsertColumnParenthesis(List<String> columns){
+    protected String generateInsertColumnParenthesis(List<String> columns){
         StringBuilder result = new StringBuilder();
         for(String column : columns){
             result.append(column);
@@ -224,7 +224,7 @@ public class ANSISQLDialect implements Dialect {
         return result.toString();
     }
 
-    private String generateQuestionMarks(int number){
+    protected String generateQuestionMarks(int number){
         StringBuilder result = new StringBuilder();
         for(int i = 0; i < number; i++){
             result.append("?");
@@ -234,12 +234,12 @@ public class ANSISQLDialect implements Dialect {
         return result.toString();
     }
 
-    private String generateFieldExpWithAlias(FieldNode fieldNode, String baseAlias) {
+    protected String generateFieldExpWithAlias(FieldNode fieldNode, String baseAlias) {
         return "%s AS %s".formatted(generateFieldExp(fieldNode),
                 quote("%s%s.%s".formatted(handleRootField(fieldNode.getTableAlias(), baseAlias), fieldNode.getTableAlias(), fieldNode.getFieldName())));
     }
 
-    private String handleRootField(String tableAlias, String baseRoot){
+    protected String handleRootField(String tableAlias, String baseRoot){
         if(tableAlias.equals(baseRoot)){
             return "";
         }
