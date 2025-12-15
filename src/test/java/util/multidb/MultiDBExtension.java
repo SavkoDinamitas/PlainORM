@@ -1,21 +1,17 @@
 package util.multidb;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.extension.*;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import util.HrScheme;
 
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class MultiDBExtention implements ClassTemplateInvocationContextProvider {
+public class MultiDBExtension implements ClassTemplateInvocationContextProvider {
 
     private static final Namespace NAMESPACE =
-            Namespace.create(MultiDBExtention.class);
+            Namespace.create(MultiDBExtension.class);
 
     private ClassTemplateInvocationContext invocationFor(DbUnderTest db) {
         return new ClassTemplateInvocationContext() {

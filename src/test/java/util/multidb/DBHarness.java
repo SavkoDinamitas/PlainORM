@@ -3,57 +3,56 @@ package util.multidb;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.mariadb.MariaDBContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import util.HrScheme;
+import util.multidb.apstraction.DbBackend;
+import util.multidb.apstraction.SimpleBackend;
+import util.multidb.apstraction.TestContainerDb;
 
 import java.sql.DriverManager;
 import java.util.List;
+import java.util.stream.Stream;
 
-public class DBHarness implements AutoCloseable{
-    private final PostgreSQLContainer PSQLContainer = new PostgreSQLContainer("postgres:18");
+@Slf4j
+public class DBHarness implements AutoCloseable {
+    private final PostgreSQLContainer psqlContainer = new PostgreSQLContainer("postgres:18");
     private final MariaDBContainer mariaDBContainer = new MariaDBContainer("mariadb:12");
     @Getter
     private final List<DbUnderTest> dbs;
+    private final List<DbBackend> dbBackends;
 
-    public DBHarness(){
-        PSQLContainer.start();
-        mariaDBContainer.start();
-        dbs = List.of(
-                hikari(
-                        "H2",
+    public DBHarness() {
+        //list of all dbc for testing
+        dbBackends = List.of(
+                new SimpleBackend("H2",
                         "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
                         "sa",
                         "",
-                        HrScheme.SCRIPT
-                ),
-                new DbUnderTest("H2", () -> DriverManager.getConnection("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "sa", ""), () -> {}, HrScheme.SCRIPT),
-                hikari(
-                        "Postgres",
-                        PSQLContainer.getJdbcUrl(),
-                        PSQLContainer.getUsername(),
-                        PSQLContainer.getPassword(),
-                        HrScheme.PSQLScript
-                ),
-                new DbUnderTest("Postgres", () -> PSQLContainer.createConnection(""), () -> {}, HrScheme.PSQLScript),
-                hikari(
-                        "MariaDB",
-                        mariaDBContainer.getJdbcUrl() + "?allowMultiQueries=true",
-                        mariaDBContainer.getUsername(),
-                        mariaDBContainer.getPassword(),
-                        HrScheme.MARIADBSCRIPT
-                ),
-                new DbUnderTest("MariaDb", () -> mariaDBContainer.createConnection("?allowMultiQueries=true"), () -> {}, HrScheme.MARIADBSCRIPT)
+                        HrScheme.SCRIPT),
+                new TestContainerDb(psqlContainer, "Postgres", HrScheme.PSQLScript),
+                new TestContainerDb(mariaDBContainer, "MariaDB", HrScheme.MARIADBSCRIPT, "?allowMultiQueries=true")
         );
+        //start all dbs
+        dbBackends.forEach(backend -> { try { backend.start();} catch (Exception e) { log.error(e.getMessage(), e); } });
+
+        //make DBUnderTest instances for each db with jdbc standard connection and hikaricp pool
+        dbs = dbBackends.stream().flatMap(backend -> Stream.of(
+                hikari(backend.name(), backend.jdbcUrl(), backend.jdbcUser(), backend.jdbcPass(), backend.initScript()),
+                new DbUnderTest(backend.name(), () -> DriverManager.getConnection(backend.jdbcUrl(), backend.jdbcUser(), backend.jdbcPass()), () -> {
+                }, backend.initScript())
+        )).toList();
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         for(DbUnderTest db : dbs){
             db.closeFunction().run();
         }
-        PSQLContainer.close();
-        mariaDBContainer.close();
+        dbBackends.forEach(backend -> { try { backend.stop();} catch (Exception e) { log.error(e.getMessage(), e); } });
     }
 
     private DbUnderTest hikari(
