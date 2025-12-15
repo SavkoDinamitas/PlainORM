@@ -4,8 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.testcontainers.mssqlserver.MSSQLServerContainer;
 import org.testcontainers.mariadb.MariaDBContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import util.HrScheme;
@@ -21,6 +20,7 @@ import java.util.stream.Stream;
 public class DBHarness implements AutoCloseable {
     private final PostgreSQLContainer psqlContainer = new PostgreSQLContainer("postgres:18");
     private final MariaDBContainer mariaDBContainer = new MariaDBContainer("mariadb:12");
+    private final MSSQLServerContainer mssqlServerContainer = new MSSQLServerContainer("mcr.microsoft.com/mssql/server:2022-latest").acceptLicense();
     @Getter
     private final List<DbUnderTest> dbs;
     private final List<DbBackend> dbBackends;
@@ -34,7 +34,8 @@ public class DBHarness implements AutoCloseable {
                         "",
                         HrScheme.SCRIPT),
                 new TestContainerDb(psqlContainer, "Postgres", HrScheme.PSQLScript),
-                new TestContainerDb(mariaDBContainer, "MariaDB", HrScheme.MARIADBSCRIPT, "?allowMultiQueries=true")
+                new TestContainerDb(mariaDBContainer, "MariaDB", HrScheme.MARIADBSCRIPT, "?allowMultiQueries=true"),
+                new TestContainerDb(mssqlServerContainer, "MSSQL Server", HrScheme.MSSQLSCRIPT)
         );
         //start all dbs
         dbBackends.forEach(backend -> { try { backend.start();} catch (Exception e) { log.error(e.getMessage(), e); } });

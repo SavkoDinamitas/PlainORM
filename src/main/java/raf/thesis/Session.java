@@ -10,6 +10,7 @@ import raf.thesis.query.PreparedStatementQuery;
 import raf.thesis.query.QueryBuilder;
 import raf.thesis.query.dialect.ANSISQLDialect;
 import raf.thesis.query.dialect.Dialect;
+import raf.thesis.query.dialect.MSSQLServerDialect;
 import raf.thesis.query.dialect.MariaDBDialect;
 import raf.thesis.query.exceptions.ConnectionUnavailableException;
 import raf.thesis.query.exceptions.EntityObjectRequiredException;
@@ -56,6 +57,8 @@ public class Session {
                 return new MariaDBDialect();
             if(driverName.toLowerCase().contains("mysql"))
                 return new MariaDBDialect();
+            if(driverName.toLowerCase().contains("microsoft"))
+                return new MSSQLServerDialect();
             else
                 return new ANSISQLDialect();
         } catch (SQLException e) {

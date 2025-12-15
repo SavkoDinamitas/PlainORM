@@ -613,7 +613,223 @@ public class HrScheme {
                 (4, 7.8, 103),
                 (5, 10.0, 104);
             """;
-
+    @Language("SQL")
+    public static final String MSSQLSCRIPT = """
+            ------------------------------------------------------------
+            -- DROP TABLES (order matters)
+            ------------------------------------------------------------
+            IF OBJECT_ID('performances', 'U') IS NOT NULL DROP TABLE performances;
+            IF OBJECT_ID('employee_projects', 'U') IS NOT NULL DROP TABLE employee_projects;
+            IF OBJECT_ID('projects', 'U') IS NOT NULL DROP TABLE projects;
+            IF OBJECT_ID('job_history', 'U') IS NOT NULL DROP TABLE job_history;
+            IF OBJECT_ID('employees', 'U') IS NOT NULL DROP TABLE employees;
+            IF OBJECT_ID('jobs', 'U') IS NOT NULL DROP TABLE jobs;
+            IF OBJECT_ID('departments', 'U') IS NOT NULL DROP TABLE departments;
+            IF OBJECT_ID('locations', 'U') IS NOT NULL DROP TABLE locations;
+            IF OBJECT_ID('countries', 'U') IS NOT NULL DROP TABLE countries;
+            IF OBJECT_ID('regions', 'U') IS NOT NULL DROP TABLE regions;
+            
+            ------------------------------------------------------------
+            -- REGIONS
+            ------------------------------------------------------------
+            CREATE TABLE regions (
+                region_id INT PRIMARY KEY,
+                region_name VARCHAR(50)
+            );
+            
+            INSERT INTO regions VALUES
+                (1, 'Europe'),
+                (2, 'Americas'),
+                (3, 'Asia'),
+                (4, 'Middle East and Africa');
+            
+            ------------------------------------------------------------
+            -- COUNTRIES
+            ------------------------------------------------------------
+            CREATE TABLE countries (
+                country_id CHAR(2) PRIMARY KEY,
+                country_name VARCHAR(50),
+                region_id INT,
+                CONSTRAINT fk_countries_regions
+                    FOREIGN KEY (region_id) REFERENCES regions(region_id)
+            );
+            
+            INSERT INTO countries VALUES
+                ('US', 'United States of America', 2),
+                ('UK', 'United Kingdom', 1),
+                ('CA', 'Canada', 2),
+                ('JP', 'Japan', 3);
+            
+            ------------------------------------------------------------
+            -- LOCATIONS
+            ------------------------------------------------------------
+            CREATE TABLE locations (
+                location_id INT PRIMARY KEY,
+                street_address VARCHAR(100),
+                postal_code VARCHAR(12),
+                city VARCHAR(30),
+                state_province VARCHAR(25),
+                country_id CHAR(2),
+                CONSTRAINT fk_locations_countries
+                    FOREIGN KEY (country_id) REFERENCES countries(country_id)
+            );
+            
+            INSERT INTO locations VALUES
+                (1000, '200 Innovation Drive', '95054', 'San Jose', 'California', 'US'),
+                (1100, '10 Oxford Street', 'OX1', 'Oxford', NULL, 'UK'),
+                (1200, '77 Bay Street', 'M5J', 'Toronto', 'Ontario', 'CA'),
+                (1300, '1 Chiyoda', '100-8111', 'Tokyo', NULL, 'JP');
+            
+            ------------------------------------------------------------
+            -- DEPARTMENTS
+            ------------------------------------------------------------
+            CREATE TABLE departments (
+                department_id INT PRIMARY KEY,
+                department_name VARCHAR(30) NOT NULL,
+                manager_id INT,
+                location_id INT,
+                CONSTRAINT fk_departments_locations
+                    FOREIGN KEY (location_id) REFERENCES locations(location_id)
+            );
+            
+            INSERT INTO departments VALUES
+                (10, 'Administration', NULL, 1000),
+                (20, 'Marketing', NULL, 1100),
+                (30, 'Purchasing', NULL, 1200),
+                (40, 'Human Resources', NULL, 1300);
+            
+            ------------------------------------------------------------
+            -- JOBS
+            ------------------------------------------------------------
+            CREATE TABLE jobs (
+                job_id VARCHAR(10) PRIMARY KEY,
+                job_title VARCHAR(35) NOT NULL,
+                min_salary INT,
+                max_salary INT
+            );
+            
+            INSERT INTO jobs VALUES
+                ('AD_PRESS', 'President', 15000, 30000),
+                ('AD_VP', 'Vice President', 12000, 25000),
+                ('IT_PROG', 'Programmer', 4000, 10000),
+                ('MK_REP', 'Marketing Representative', 3000, 8000);
+            
+            ------------------------------------------------------------
+            -- EMPLOYEES
+            ------------------------------------------------------------
+            CREATE TABLE employees (
+                employee_id INT PRIMARY KEY,
+                first_name VARCHAR(20),
+                last_name VARCHAR(25) NOT NULL,
+                email VARCHAR(50),
+                phone_number VARCHAR(20),
+                hire_date DATE NOT NULL,
+                job_id VARCHAR(10),
+                salary INT,
+                manager_id INT,
+                department_id INT,
+                CONSTRAINT fk_employees_jobs
+                    FOREIGN KEY (job_id) REFERENCES jobs(job_id),
+                CONSTRAINT fk_employees_departments
+                    FOREIGN KEY (department_id) REFERENCES departments(department_id)
+            );
+            
+            INSERT INTO employees VALUES
+                (100, 'Steven', 'King', 'SKING', '515.123.4567', '2003-06-17', 'AD_PRESS', 24000, NULL, 10),
+                (101, 'Neena', 'Kochhar', 'NKOCHHAR', '515.123.4568', '2005-09-21', 'AD_VP', 17000, 100, 20),
+                (102, 'Lex', 'De Haan', 'LDEHAAN', '515.123.4569', '2001-01-13', 'IT_PROG', 9000, 100, 30),
+                (103, 'Alexander', 'Hunold', 'AHUNOLD', '590.423.4567', '2006-01-03', 'IT_PROG', 6000, 102, 30),
+                (104, 'Bruce', 'Ernst', 'BERNST', '590.423.5678', '2007-05-21', 'MK_REP', 4000, 101, 20);
+            
+            ------------------------------------------------------------
+            -- JOB HISTORY
+            ------------------------------------------------------------
+            CREATE TABLE job_history (
+                employee_id INT,
+                start_date DATE,
+                end_date DATE,
+                job_id VARCHAR(10),
+                department_id INT,
+                CONSTRAINT pk_job_history
+                    PRIMARY KEY (employee_id, start_date),
+                CONSTRAINT fk_job_history_employees
+                    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+                CONSTRAINT fk_job_history_jobs
+                    FOREIGN KEY (job_id) REFERENCES jobs(job_id),
+                CONSTRAINT fk_job_history_departments
+                    FOREIGN KEY (department_id) REFERENCES departments(department_id)
+            );
+            
+            INSERT INTO job_history VALUES
+                (101, '2004-01-01', '2005-09-20', 'MK_REP', 20),
+                (103, '2005-03-01', '2006-01-02', 'IT_PROG', 30);
+            
+            ------------------------------------------------------------
+            -- PROJECTS
+            ------------------------------------------------------------
+            CREATE TABLE projects (
+                project_id INT IDENTITY(1,1) PRIMARY KEY,
+                project_name VARCHAR(100) NOT NULL
+            );
+            
+            SET IDENTITY_INSERT projects ON;
+            INSERT INTO projects (project_id, project_name) VALUES
+                (1, 'HR Onboarding System'),
+                (2, 'Internal Payroll Platform'),
+                (3, 'Corporate Website Redesign'),
+                (4, 'Mobile Sales Dashboard'),
+                (5, 'Cloud Migration Initiative');
+            SET IDENTITY_INSERT projects OFF;
+            
+            ------------------------------------------------------------
+            -- EMPLOYEE_PROJECTS
+            ------------------------------------------------------------
+            CREATE TABLE employee_projects (
+                employee_id INT NOT NULL,
+                project_id INT NOT NULL,
+                CONSTRAINT pk_employee_projects
+                    PRIMARY KEY (employee_id, project_id),
+                CONSTRAINT fk_employee_projects_employees
+                    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+                CONSTRAINT fk_employee_projects_projects
+                    FOREIGN KEY (project_id) REFERENCES projects(project_id)
+            );
+            
+            INSERT INTO employee_projects VALUES (100, 1);
+            INSERT INTO employee_projects VALUES (100, 2);
+            INSERT INTO employee_projects VALUES (100, 5);
+            INSERT INTO employee_projects VALUES (101, 1);
+            INSERT INTO employee_projects VALUES (102, 3);
+            INSERT INTO employee_projects VALUES (102, 5);
+            INSERT INTO employee_projects VALUES (103, 4);
+            INSERT INTO employee_projects VALUES (104, 2);
+            INSERT INTO employee_projects VALUES (104, 4);
+            
+            ------------------------------------------------------------
+            -- PERFORMANCES
+            ------------------------------------------------------------
+            CREATE TABLE performances (
+                performance_id INT PRIMARY KEY,
+                performance_score FLOAT,
+                employee_id INT NULL,
+                CONSTRAINT fk_performances_employees
+                    FOREIGN KEY (employee_id)
+                    REFERENCES employees(employee_id)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE
+            );
+            
+            CREATE UNIQUE INDEX ux_performances_employee_id
+            ON performances(employee_id)
+            WHERE employee_id IS NOT NULL;
+            
+            INSERT INTO performances VALUES
+                (1, 9.5, 100),
+                (2, 8.1, 101),
+                (3, 6.0, 102),
+                (4, 7.8, 103),
+                (5, 10.0, 104);
+            """;
     public static void fillMetadataManually() throws NoSuchFieldException {
         //Departments
         Map<String, ColumnMetadata> map = new HashMap<>();

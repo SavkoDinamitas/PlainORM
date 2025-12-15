@@ -13,6 +13,7 @@ import raf.thesis.query.Join;
 import raf.thesis.query.QueryBuilder;
 import raf.thesis.query.dialect.ANSISQLDialect;
 import raf.thesis.query.dialect.Dialect;
+import raf.thesis.query.dialect.MSSQLServerDialect;
 import raf.thesis.query.dialect.MariaDBDialect;
 import raf.thesis.query.exceptions.ConnectionUnavailableException;
 import util.H2HRProvider;
@@ -33,10 +34,14 @@ public class LayerIntegrationTest {
     private static final RowMapper rowMapper = new DefaultMapperImplementation();
 
     private Dialect getDialect(ConnectionSupplier connectionSupplier) {
-        try (Connection conn = connectionSupplier.getConnection()) {
-            String url = conn.getMetaData().getURL();
-            if (url.contains("mariadb"))
+        try(Connection conn = connectionSupplier.getConnection()){
+            String driverName = conn.getMetaData().getDriverName();
+            if(driverName.toLowerCase().contains("mariadb"))
                 return new MariaDBDialect();
+            if(driverName.toLowerCase().contains("mysql"))
+                return new MariaDBDialect();
+            if(driverName.toLowerCase().contains("microsoft"))
+                return new MSSQLServerDialect();
             else
                 return new ANSISQLDialect();
         } catch (SQLException e) {
