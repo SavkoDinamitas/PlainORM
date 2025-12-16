@@ -1,114 +1,135 @@
 package raf.thesis.query;
 
 import raf.thesis.metadata.storage.MetadataStorage;
-import raf.thesis.query.dialect.ANSISQLDialect;
 import raf.thesis.query.dialect.Dialect;
 import raf.thesis.query.tree.Expression;
 import raf.thesis.query.tree.OrderByNode;
 import raf.thesis.query.tree.SelectNode;
 
-
 import java.util.List;
 
+/**
+ * Helper class for {@link QueryBuilder}.
+ * Builds subquery expressions for use in conditional expressions in {@code WHERE} clause.
+ */
 public class SubQueryBuilder extends QueryBuilder implements Expression {
     List<Expression> columns;
+
+    /**
+    * Use default super constructor and set SELECT clause to given column expressions
+    */
     SubQueryBuilder(Class<?> root, List<Expression> columns) {
         super(new SelectNode(root, MetadataStorage.get(root).getTableName()));
         this.columns = columns;
     }
 
     /**
-     * Add distinct keyword in query
-     * @return updated subquery builder
+     * Adds {@code DISTINCT} keyword in select query.
+     *
+     * @return this subquery builder with the {@code DISTINCT} keyword applied
      */
-    public SubQueryBuilder distinct(){
+    public SubQueryBuilder distinct() {
         super.distinct();
         return this;
     }
 
     /**
-     * Specify which relations should be populated in returning objects (inner join by default)
-     * @param relationPath dot separated relation path from root entity
-     * @return updated subquery builder
+     * Specifies which relations should be populated in the returned objects.
+     * Uses an {@link Join#INNER} by default.
+     *
+     * @param relationPath dot-separated relation path from the root entity
+     * @return this subquery builder with the added {@code JOIN} clause
      */
-    public SubQueryBuilder join(String relationPath){
+    public SubQueryBuilder join(String relationPath) {
         super.join(relationPath);
         return this;
     }
 
     /**
-     * Specify which relations should be populated in returning objects
-     * @param relationPath dot separated relation path from root entity
-     * @param join determine type of join, LEFT, INNER, RIGHT or FULL
-     * @return updated subquery builder
+     * Specifies which relations should be populated in the returned objects.
+     *
+     * @param relationPath dot-separated relation path from the root entity
+     * @param join         the join type to use {@link Join}
+     * @return this subquery builder with the added {@code JOIN} clause
      */
-    public SubQueryBuilder join(String relationPath, Join join){
+    public SubQueryBuilder join(String relationPath, Join join) {
         super.join(relationPath, join);
         return this;
     }
 
     /**
-     * Specify where clause for query
-     * @param expression expression inside where clause
-     * @return updated subquery builder
+     * Specifies the {@code WHERE} clause for the subquery.
+     *
+     * @param expression the {@code WHERE} condition expression
+     * @return this subquery builder with the {@code WHERE} clause applied
      */
-    public SubQueryBuilder where(Expression expression){
+    public SubQueryBuilder where(Expression expression) {
         super.where(expression);
         return this;
     }
 
     /**
-     * Specify having clause for query
-     * @param expression expression inside having clause
-     * @return updated subquery builder
+     * Specifies the {@code HAVING} clause for the subquery.
+     *
+     * @param expression the {@code HAVING} condition expression
+     * @return this subquery builder with the {@code HAVING} clause applied
      */
-    public SubQueryBuilder having(Expression expression){
+    public SubQueryBuilder having(Expression expression) {
         super.having(expression);
         return this;
     }
 
     /**
-     * Specify groupBy clause for query
-     * @param e1 first expression
-     * @param expressions other expressions
-     * @return updated subquery builder
+     * Specifies the {@code GROUP BY} clause for the subquery.
+     *
+     * @param e1          required primary grouping expression
+     * @param expressions optional additional grouping expressions
+     * @return this subquery builder with the grouping applied
      */
-    public SubQueryBuilder groupBy(Expression e1, Expression... expressions){
+    public SubQueryBuilder groupBy(Expression e1, Expression... expressions) {
         super.groupBy(e1, expressions);
         return this;
     }
 
     /**
-     * Specify orderBy clause for query, use {@link ConditionBuilder#asc} and {@link ConditionBuilder#desc} static functions to create them
-     * @param orderByNode first order by node for sorting
-     * @param others other order by nodes
-     * @return updated subquery builder
+     * Specifies the {@code ORDER BY} clause for the subquery.
+     * Use {@link ConditionBuilder#asc} and {@link ConditionBuilder#desc} static functions to create ordering nodes.
+     *
+     * @param orderByNode required primary ordering node
+     * @param others      optional additional ordering nodes
+     * @return this subquery builder with the ordering applied
      */
-    public SubQueryBuilder orderBy(OrderByNode orderByNode, OrderByNode... others){
+    public SubQueryBuilder orderBy(OrderByNode orderByNode, OrderByNode... others) {
         super.orderBy(orderByNode, others);
         return this;
     }
 
     /**
-     * Specify limit of number of rows that should be returned
-     * @param limit maximum number of rows
-     * @return updated subquery builder
+     * Specifies the maximum number of rows that should be returned beginning from the offset.
+     * If offset is not specified, returns the rows starting from the beginning.
+     *
+     * @param limit maximum number of rows to return
+     * @return this subquery builder with the limit applied
      */
-    public SubQueryBuilder limit(int limit){
+    public SubQueryBuilder limit(int limit) {
         super.limit(limit);
         return this;
     }
 
     /**
-     * Specify from which row should DB return the result
-     * @param offset offset from start
-     * @return updated subquery builder
+     * Specifies the starting row (offset) from which the database should return result rows.
+     *
+     * @param offset offset number of rows to skip before returning results
+     * @return this subquery builder with the offset applied
      */
-    public QueryBuilder offset(int offset){
+    public QueryBuilder offset(int offset) {
         super.offset(offset);
         return this;
     }
 
+    /**
+     * Generated SQL for the subquery is .build() in brackets without ;
+     */
     @Override
     public String toSql(Dialect dialect) {
         rootSelectNode.setSelectFieldNodes(columns);
