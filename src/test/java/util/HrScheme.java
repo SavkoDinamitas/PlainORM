@@ -87,8 +87,8 @@ public class HrScheme {
             JOIN employees s ON d.department_id = s.department_id;
             """;
 
-    @Language(value = "SQL")
-    public static String SCRIPT = """
+    //@Language(value = "SQL")
+    public static String H2SCRIPT = """
             ------------------------------------------------------------
             -- DROP TABLES (to allow re-running)
             ------------------------------------------------------------
@@ -102,6 +102,7 @@ public class HrScheme {
             DROP TABLE IF EXISTS locations;
             DROP TABLE IF EXISTS countries;
             DROP TABLE IF EXISTS regions;
+            DROP TABLE IF EXISTS enum_time_test;
             
             ------------------------------------------------------------
             -- REGIONS
@@ -287,8 +288,19 @@ public class HrScheme {
             INSERT INTO performances VALUES (3, 6, 102);
             INSERT INTO performances VALUES (4, 7.8, 103);
             INSERT INTO performances VALUES (5, 10, 104);
+            
+            CREATE TABLE enum_time_test (
+                id INT PRIMARY KEY,
+                status ENUM('NEW', 'RUNNING', 'DONE'),
+                created_at TIMESTAMP,
+                run_time TIME
+            );
+            
+            INSERT INTO enum_time_test VALUES
+            (1, 'NEW', TIMESTAMP '2024-01-10 12:34:56.123', TIME '12:34:56'),
+            (2, 'DONE', TIMESTAMP '2024-06-01 08:00:00', TIME '08:00:00');
             """;
-    @Language("SQL")
+    //@Language("SQL")
     public static final String PSQLScript = """
             DROP TABLE IF EXISTS performances CASCADE;
             DROP TABLE IF EXISTS employee_projects CASCADE;
@@ -300,6 +312,8 @@ public class HrScheme {
             DROP TABLE IF EXISTS locations CASCADE;
             DROP TABLE IF EXISTS countries CASCADE;
             DROP TABLE IF EXISTS regions CASCADE;
+            DROP TABLE IF EXISTS enum_time_test;
+            DROP TYPE IF EXISTS status_enum;
             
             CREATE TABLE regions (
                 region_id INTEGER PRIMARY KEY,
@@ -444,8 +458,20 @@ public class HrScheme {
                 (3, 6.0, 102),
                 (4, 7.8, 103),
                 (5, 10.0, 104);
+            
+            
+            CREATE TABLE enum_time_test (
+                id INT PRIMARY KEY,
+                status VARCHAR(100) CONSTRAINT valid_status CHECK (status IN ('NEW', 'RUNNING', 'DONE')),
+                created_at TIMESTAMP,
+                run_time TIME
+            );
+            
+            INSERT INTO enum_time_test VALUES
+            (1, 'NEW', TIMESTAMP '2024-01-10 12:34:56.123', TIME '12:34:56'),
+            (2, 'DONE', TIMESTAMP '2024-06-01 08:00:00', TIME '08:00:00');
             """;
-    @Language("SQL")
+    //@Language("SQL")
     public static final String MARIADBSCRIPT = """
             DROP TABLE IF EXISTS performances;
             DROP TABLE IF EXISTS employee_projects;
@@ -457,6 +483,7 @@ public class HrScheme {
             DROP TABLE IF EXISTS locations;
             DROP TABLE IF EXISTS countries;
             DROP TABLE IF EXISTS regions;
+            DROP TABLE IF EXISTS enum_time_test;
             
             CREATE TABLE regions (
                 region_id INT PRIMARY KEY,
@@ -612,8 +639,19 @@ public class HrScheme {
                 (3, 6.0, 102),
                 (4, 7.8, 103),
                 (5, 10.0, 104);
+            
+            CREATE TABLE enum_time_test (
+                id INT PRIMARY KEY,
+                status ENUM('NEW', 'RUNNING', 'DONE'),
+                created_at TIMESTAMP(3),
+                run_time TIME
+            );
+            
+            INSERT INTO enum_time_test VALUES
+            (1, 'NEW', '2024-01-10 12:34:56.123', '12:34:56'),
+            (2, 'DONE', '2024-06-01 08:00:00', '08:00:00');
             """;
-    @Language("SQL")
+    //@Language("SQL")
     public static final String MSSQLSCRIPT = """
             ------------------------------------------------------------
             -- DROP TABLES (order matters)
@@ -628,6 +666,7 @@ public class HrScheme {
             IF OBJECT_ID('locations', 'U') IS NOT NULL DROP TABLE locations;
             IF OBJECT_ID('countries', 'U') IS NOT NULL DROP TABLE countries;
             IF OBJECT_ID('regions', 'U') IS NOT NULL DROP TABLE regions;
+            IF OBJECT_ID('enum_time_test', 'U') IS NOT NULL DROP TABLE enum_time_test;
             
             ------------------------------------------------------------
             -- REGIONS
@@ -829,6 +868,17 @@ public class HrScheme {
                 (3, 6.0, 102),
                 (4, 7.8, 103),
                 (5, 10.0, 104);
+            
+            CREATE TABLE enum_time_test (
+                id INT PRIMARY KEY,
+                status VARCHAR(10) CHECK (status IN ('NEW', 'RUNNING', 'DONE')),
+                created_at DATETIME2,
+                run_time TIME
+            );
+            
+            INSERT INTO enum_time_test VALUES
+            (1, 'NEW', '2024-01-10T12:34:56.123', '12:34:56'),
+            (2, 'DONE', '2024-06-01T08:00:00', '08:00:00');
             """;
     public static void fillMetadataManually() throws NoSuchFieldException {
         //Departments

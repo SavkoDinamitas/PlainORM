@@ -1,7 +1,5 @@
 package util;
 
-import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 
@@ -22,7 +20,7 @@ public class H2HRProvider implements TestInstancePostProcessor {
         context.getStore(ExtensionContext.Namespace.GLOBAL).put("connection", conn);
         try (Statement stmt = conn.createStatement()) {
             //noinspection SqlSourceToSinkFlow
-            stmt.execute(HrScheme.SCRIPT);
+            stmt.execute(HrScheme.H2SCRIPT);
         }
     }
 }

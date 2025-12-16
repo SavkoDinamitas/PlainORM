@@ -232,8 +232,14 @@ public class DefaultMapperImplementation implements RowMapper {
             Field field = columnMetadata.getField();
             String fieldName = field.getName();
             Class<?> fieldType = field.getType();
+            Object value;
+            //check if it is enum
+            if(fieldType.isEnum()){
+                value = enumFromString(fieldType, rs.getString(resultSetColumnName));
+            }
             //convert primitive types to java wrappers for JDBC
-            Object value = rs.getObject(resultSetColumnName, javaPrimitiveTypes(fieldType));
+            else
+                value = rs.getObject(resultSetColumnName, javaPrimitiveTypes(fieldType));
             //check if field is PK and null -> db null object
             List<Field> pkFields = entityMetadata.getIdFields();
             if (pkFields.contains(field) && value == null) {
@@ -249,6 +255,14 @@ public class DefaultMapperImplementation implements RowMapper {
             throw new TypeConversionException(e);
         }
     }
+
+    //construct instance of enum that is given
+    private <E extends Enum<E>> E enumFromString(Class<?> enumClass, String value) {
+        assert enumClass.isEnum();
+        if (value == null) return null;
+        return Enum.valueOf((Class<E>) enumClass, value);
+    }
+
 
     private List<Object> getPrimaryKey(Object instance) {
         try {

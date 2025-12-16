@@ -300,6 +300,7 @@ public class DBUpdateSolver {
             case Boolean bool -> new Literal.BoolCnst(bool);
 
             case String str -> new Literal.StringCnst(str);
+            case Enum<?> e -> new Literal.StringCnst(e.name());
 
             case LocalDate date -> new Literal.DateCnst(date);
             case LocalDateTime dateTime -> new Literal.DateTimeCnst(dateTime);

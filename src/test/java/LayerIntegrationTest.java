@@ -1,7 +1,4 @@
-import layering.DepartmentsWithMaxEmployeeIdPDO;
-import layering.Employee;
-import layering.Department;
-import layering.Project;
+import layering.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +18,9 @@ import util.multidb.MultiDBTest;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -228,6 +228,19 @@ public class LayerIntegrationTest {
             Employee Neena = new Employee(101, "Neena", "Kochhar", LocalDate.of(2005, 9, 21));
             Employee Lex = new Employee(102, "Lex", "De Haan", LocalDate.of(2001, 1, 13));
             assertThat(employees).usingRecursiveComparison().isEqualTo(List.of(Steven, Neena, Lex));
+        }
+    }
+
+    @Test
+    void testTimesAndEnumIntegration(ConnectionSupplier cp)throws SQLException{
+        String query = QueryBuilder.select(TypeTest.class).build(getDialect(cp));
+        try (Connection conn = cp.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            List<TypeTest> tests = rowMapper.mapWithRelations(rs, TypeTest.class);
+            TypeTest first = new TypeTest(1, Status.NEW, LocalDateTime.of(2024, Month.JANUARY, 10, 12, 34, 56, 123 * 1_000_000), LocalTime.of(12, 34, 56));
+            TypeTest second = new TypeTest(2, Status.DONE, LocalDateTime.of(2024, Month.JUNE, 1, 8, 0, 0), LocalTime.of(8, 0, 0));
+            assertThat(tests).usingRecursiveComparison().isEqualTo(List.of(first, second));
         }
     }
 

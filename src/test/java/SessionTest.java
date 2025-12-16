@@ -1,7 +1,4 @@
-import layering.Department;
-import layering.Employee;
-import layering.Performance;
-import layering.Project;
+import layering.*;
 import org.junit.jupiter.api.Test;
 import raf.thesis.Session;
 import raf.thesis.query.QueryBuilder;
@@ -9,6 +6,8 @@ import util.multidb.MultiDBTest;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -27,6 +26,15 @@ public class SessionTest {
         List<Employee> employees = session.executeSelect(QueryBuilder.select(Employee.class).where(field("employee_id").eq(lit(105))), Employee.class);
         assertFalse(employees.isEmpty());
         assertThat(employees.getFirst()).usingRecursiveComparison().isEqualTo(me);
+    }
+
+    @Test
+    void testSpecificTypeInserts(Session session) throws SQLException{
+        TypeTest tt = new TypeTest(3, Status.RUNNING, LocalDateTime.of(2025, 1, 20, 15, 37, 41, 456*1_000_000), LocalTime.of(16, 23, 0));
+        session.insert(tt);
+        List<TypeTest> tests = session.executeSelect(QueryBuilder.select(TypeTest.class).where(field("id").eq(lit(3))), TypeTest.class);
+        assertFalse(tests.isEmpty());
+        assertThat(tests.getFirst()).usingRecursiveComparison().isEqualTo(tt);
     }
 
     @Test

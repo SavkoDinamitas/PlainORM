@@ -32,7 +32,7 @@ public class DBHarness implements AutoCloseable {
                         "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
                         "sa",
                         "",
-                        HrScheme.SCRIPT),
+                        HrScheme.H2SCRIPT),
                 new TestContainerDb(psqlContainer, "Postgres", HrScheme.PSQLScript),
                 new TestContainerDb(mariaDBContainer, "MariaDB", HrScheme.MARIADBSCRIPT, "?allowMultiQueries=true"),
                 new TestContainerDb(mssqlServerContainer, "MSSQL Server", HrScheme.MSSQLSCRIPT)
